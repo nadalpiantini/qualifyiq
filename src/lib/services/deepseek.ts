@@ -1,10 +1,24 @@
 import OpenAI from 'openai'
 
-// DeepSeek client using OpenAI-compatible API
-const client = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY,
-})
+// Singleton client for DeepSeek (lazy initialization to avoid build-time errors)
+let client: OpenAI | null = null
+
+function getClient(): OpenAI {
+  if (!client) {
+    const apiKey = process.env.DEEPSEEK_API_KEY
+
+    if (!apiKey) {
+      throw new Error('DEEPSEEK_API_KEY is not configured in environment variables')
+    }
+
+    client = new OpenAI({
+      baseURL: 'https://api.deepseek.com',
+      apiKey,
+    })
+  }
+
+  return client
+}
 
 // Types for AI responses
 export interface CompanyIntelligence {
@@ -124,7 +138,8 @@ export async function analyzeCompany(
     : `Analyze this company for B2B lead qualification: "${companyName}"${options?.industry ? ` in the ${options.industry} industry` : ''}`
 
   try {
-    const response = await client.chat.completions.create({
+    const deepseekClient = getClient()
+    const response = await deepseekClient.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
         { role: 'system', content: systemPrompt },
