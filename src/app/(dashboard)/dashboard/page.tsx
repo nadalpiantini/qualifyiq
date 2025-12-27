@@ -1,14 +1,24 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScoreBadge } from '@/components/ui/score-badge'
+import { Button } from '@/components/ui/button'
 import {
   Users,
   CheckCircle2,
   XCircle,
   TrendingUp,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Clock,
+  AlertCircle,
+  Calendar,
+  ArrowRight
 } from 'lucide-react'
+import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
 
 // Mock data - will be replaced with real data from Supabase
 const stats = [
@@ -51,6 +61,16 @@ const recentLeads = [
 ]
 
 export default function DashboardPage() {
+  const [reviewLeads, setReviewLeads] = useState<typeof DEMO_LEADS>([])
+
+  useEffect(() => {
+    // Get leads needing review/follow-up
+    if (isDemoMode()) {
+      const needsReview = DEMO_LEADS.filter(l => l.recommendation === 'review')
+      setReviewLeads(needsReview)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen">
       <Header
@@ -59,6 +79,65 @@ export default function DashboardPage() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Follow-up Reminders Widget */}
+        {reviewLeads.length > 0 && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Leads Needing Follow-up</CardTitle>
+                    <p className="text-sm text-gray-600">These REVIEW leads need your attention</p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 text-sm font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                  {reviewLeads.length} pending
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {reviewLeads.slice(0, 3).map((lead) => (
+                  <div
+                    key={lead.id}
+                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-yellow-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{lead.companyName}</p>
+                        <p className="text-sm text-gray-500">{lead.contactName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <ScoreBadge score={lead.score} size="sm" />
+                      <Link href={`/leads/${lead.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Follow up
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {reviewLeads.length > 3 && (
+                <Link href="/leads?filter=review" className="block mt-4">
+                  <Button variant="ghost" className="w-full text-yellow-700 hover:text-yellow-800 hover:bg-yellow-100">
+                    View all {reviewLeads.length} leads needing review
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
@@ -129,9 +208,12 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <button className="text-violet-600 hover:text-violet-800 text-sm font-medium">
+                        <Link
+                          href={`/leads/demo-lead-${lead.id}`}
+                          className="text-violet-600 hover:text-violet-800 text-sm font-medium"
+                        >
                           View Details
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Header } from '@/components/layout/header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,82 +8,22 @@ import { Input } from '@/components/ui/input'
 import { ScoreBadge } from '@/components/ui/score-badge'
 import { Plus, Download, Eye, Trash2, Edit } from 'lucide-react'
 import Link from 'next/link'
-
-// Mock data
-const MOCK_LEADS = [
-  {
-    id: '1',
-    companyName: 'TechCorp Industries',
-    contactName: 'John Smith',
-    contactEmail: 'john@techcorp.com',
-    source: 'Website',
-    status: 'qualified',
-    score: 85,
-    recommendation: 'go',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    companyName: 'StartupXYZ',
-    contactName: 'Jane Doe',
-    contactEmail: 'jane@startupxyz.com',
-    source: 'Referral',
-    status: 'disqualified',
-    score: 42,
-    recommendation: 'no_go',
-    createdAt: '2024-01-14',
-  },
-  {
-    id: '3',
-    companyName: 'Enterprise Solutions Ltd',
-    contactName: 'Bob Johnson',
-    contactEmail: 'bob@enterprise.com',
-    source: 'LinkedIn',
-    status: 'pending',
-    score: 68,
-    recommendation: 'review',
-    createdAt: '2024-01-13',
-  },
-  {
-    id: '4',
-    companyName: 'Agency Pro',
-    contactName: 'Alice Brown',
-    contactEmail: 'alice@agencypro.com',
-    source: 'Conference',
-    status: 'qualified',
-    score: 78,
-    recommendation: 'go',
-    createdAt: '2024-01-12',
-  },
-  {
-    id: '5',
-    companyName: 'SMB Solutions',
-    contactName: 'Charlie Wilson',
-    contactEmail: 'charlie@smb.com',
-    source: 'Cold Email',
-    status: 'pending',
-    score: 55,
-    recommendation: 'review',
-    createdAt: '2024-01-11',
-  },
-  {
-    id: '6',
-    companyName: 'Digital Agency Co',
-    contactName: 'Diana Martinez',
-    contactEmail: 'diana@digitalagency.com',
-    source: 'Website',
-    status: 'qualified',
-    score: 92,
-    recommendation: 'go',
-    createdAt: '2024-01-10',
-  },
-]
+import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
 
 export default function LeadsPage() {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [leads, setLeads] = useState(DEMO_LEADS)
 
-  const filteredLeads = MOCK_LEADS.filter(lead => {
+  useEffect(() => {
+    // In demo mode, use DEMO_LEADS; otherwise, fetch from API
+    if (isDemoMode()) {
+      setLeads(DEMO_LEADS)
+    }
+    // TODO: Add real data fetching here
+  }, [])
+
+  const filteredLeads = leads.filter(lead => {
     const matchesFilter = filter === 'all' || lead.recommendation === filter
     const matchesSearch =
       lead.companyName.toLowerCase().includes(search.toLowerCase()) ||
@@ -191,12 +131,18 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="p-2 text-gray-400 hover:text-violet-600 transition-colors">
+                          <Link
+                            href={`/leads/${lead.id}`}
+                            className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-violet-600 transition-colors">
+                          </Link>
+                          <Link
+                            href={`/leads/${lead.id}?edit=true`}
+                            className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
+                          >
                             <Edit className="w-4 h-4" />
-                          </button>
+                          </Link>
                           <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -219,7 +165,7 @@ export default function LeadsPage() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {filteredLeads.length} of {MOCK_LEADS.length} leads
+            Showing {filteredLeads.length} of {leads.length} leads
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>

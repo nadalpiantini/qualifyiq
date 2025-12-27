@@ -88,6 +88,8 @@ export interface Database {
           outcome: 'great' | 'good' | 'neutral' | 'problematic' | 'terrible' | null
           outcome_notes: string | null
           outcome_recorded_at: string | null
+          follow_up_date: string | null
+          follow_up_notes: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -107,6 +109,8 @@ export interface Database {
           outcome?: 'great' | 'good' | 'neutral' | 'problematic' | 'terrible' | null
           outcome_notes?: string | null
           outcome_recorded_at?: string | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -126,6 +130,8 @@ export interface Database {
           outcome?: 'great' | 'good' | 'neutral' | 'problematic' | 'terrible' | null
           outcome_notes?: string | null
           outcome_recorded_at?: string | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -285,6 +291,52 @@ export interface Database {
           }
         ]
       }
+      qualifyiq_lead_notes: {
+        Row: {
+          id: string
+          lead_id: string
+          organization_id: string
+          content: string
+          note_type: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          organization_id: string
+          content: string
+          note_type?: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          organization_id?: string
+          content?: string
+          note_type?: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qualifyiq_lead_notes_lead_id_fkey'
+            columns: ['lead_id']
+            referencedRelation: 'qualifyiq_leads'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qualifyiq_lead_notes_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'qualifyiq_organizations'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       qualifyiq_leads_with_scores: {
@@ -323,9 +375,13 @@ export type Profile = Database['public']['Tables']['qualifyiq_profiles']['Row']
 export type Lead = Database['public']['Tables']['qualifyiq_leads']['Row']
 export type Scorecard = Database['public']['Tables']['qualifyiq_scorecards']['Row']
 export type ScoringConfig = Database['public']['Tables']['qualifyiq_scoring_configs']['Row']
+export type LeadNote = Database['public']['Tables']['qualifyiq_lead_notes']['Row']
 
 export type LeadInsert = Database['public']['Tables']['qualifyiq_leads']['Insert']
 export type ScorecardInsert = Database['public']['Tables']['qualifyiq_scorecards']['Insert']
+export type LeadNoteInsert = Database['public']['Tables']['qualifyiq_lead_notes']['Insert']
+export type ScorecardUpdate = Database['public']['Tables']['qualifyiq_scorecards']['Update']
+export type LeadUpdate = Database['public']['Tables']['qualifyiq_leads']['Update']
 
 // Lead with score info from view
 export type LeadWithScore = Database['public']['Views']['qualifyiq_leads_with_scores']['Row']
