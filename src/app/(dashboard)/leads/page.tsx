@@ -6,9 +6,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScoreBadge } from '@/components/ui/score-badge'
-import { Plus, Download, Eye, Trash2, Edit } from 'lucide-react'
+import { Plus, Eye, Trash2, Edit, FileSpreadsheet } from 'lucide-react'
 import Link from 'next/link'
 import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
+import { exportLeadsToCSV } from '@/lib/utils/export-csv'
 
 export default function LeadsPage() {
   const [filter, setFilter] = useState('all')
@@ -36,7 +37,7 @@ export default function LeadsPage() {
     <div className="min-h-screen">
       <Header
         title="Leads"
-        subtitle="Manage and track all your qualified leads"
+        subtitle="Gestiona y da seguimiento a todos tus leads calificados"
       />
 
       <div className="p-6 space-y-6">
@@ -44,7 +45,7 @@ export default function LeadsPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <div className="flex gap-3">
             <Input
-              placeholder="Search leads..."
+              placeholder="Buscar leads..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-64"
@@ -60,20 +61,24 @@ export default function LeadsPage() {
                       : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  {f === 'all' ? 'All' : f === 'go' ? 'GO' : f === 'review' ? 'Review' : 'No Go'}
+                  {f === 'all' ? 'Todos' : f === 'go' ? 'GO' : f === 'review' ? 'Revisar' : 'NO GO'}
                 </button>
               ))}
             </div>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export
+            <Button
+              variant="outline"
+              onClick={() => exportLeadsToCSV(filteredLeads)}
+              disabled={filteredLeads.length === 0}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Exportar CSV
             </Button>
             <Link href="/scorecard">
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                New Scorecard
+                Nuevo Scorecard
               </Button>
             </Link>
           </div>
@@ -86,13 +91,13 @@ export default function LeadsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Company</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Contact</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Source</th>
+                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Empresa</th>
+                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Contacto</th>
+                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Fuente</th>
                     <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Score</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Status</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Date</th>
-                    <th className="text-right py-4 px-6 text-sm font-medium text-gray-500">Actions</th>
+                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Estado</th>
+                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Fecha</th>
+                    <th className="text-right py-4 px-6 text-sm font-medium text-gray-500">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -156,7 +161,7 @@ export default function LeadsPage() {
 
             {filteredLeads.length === 0 && (
               <div className="py-12 text-center">
-                <p className="text-gray-500">No leads found matching your criteria.</p>
+                <p className="text-gray-500">No se encontraron leads con los criterios seleccionados.</p>
               </div>
             )}
           </CardContent>
@@ -165,14 +170,14 @@ export default function LeadsPage() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {filteredLeads.length} of {leads.length} leads
+            Mostrando {filteredLeads.length} de {leads.length} leads
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>
-              Previous
+              Anterior
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Next
+              Siguiente
             </Button>
           </div>
         </div>
