@@ -28,10 +28,23 @@ import {
   Trophy,
   ThumbsUp,
   ThumbsDown,
-  HelpCircle
+  HelpCircle,
+  Download,
+  ExternalLink,
+  Bell,
+  AlertCircle
 } from 'lucide-react'
 import { getLead, updateScorecard, addLeadNote, updateFollowUp } from '@/app/actions/leads'
 import { isDemoMode, DEMO_LEADS, DEMO_SCORECARDS, RED_FLAGS } from '@/lib/demo-mode'
+import {
+  createFollowUp,
+  downloadICalEvent,
+  generateGoogleCalendarUrl,
+  generateOutlookCalendarUrl,
+  formatFollowUpDate,
+  getDaysUntil,
+  type FollowUp,
+} from '@/lib/services/calendar'
 
 // BANT score descriptions
 const BANT_DESCRIPTIONS = {
@@ -98,9 +111,14 @@ export default function LeadDetailPage() {
   const [newNote, setNewNote] = useState('')
   const [noteType, setNoteType] = useState('note')
 
-  // Follow-up
+  // Follow-up with calendar integration
   const [followUpDate, setFollowUpDate] = useState('')
+  const [followUpTime, setFollowUpTime] = useState('10:00')
   const [followUpNotes, setFollowUpNotes] = useState('')
+  const [followUpPriority, setFollowUpPriority] = useState<'high' | 'medium' | 'low'>('medium')
+  const [followUpTitle, setFollowUpTitle] = useState('')
+  const [followUpSaved, setFollowUpSaved] = useState(false)
+  const [currentFollowUp, setCurrentFollowUp] = useState<FollowUp | null>(null)
 
   // Outcome tracking
   const [outcome, setOutcome] = useState<'pending' | 'won' | 'lost' | null>(null)
@@ -223,15 +241,65 @@ export default function LeadDetailPage() {
     })
   }
 
-  // Update follow-up
+  // Update follow-up with calendar integration
   const handleUpdateFollowUp = () => {
+    if (!followUpDate || !lead) return
+
     startTransition(async () => {
+      // Create follow-up object for calendar integration
+      const newFollowUp = createFollowUp(
+        leadId,
+        lead.companyName,
+        lead.contactName,
+        followUpTitle || `Follow-up: ${lead.companyName}`,
+        followUpDate,
+        {
+          contactEmail: lead.contactEmail,
+          description: followUpNotes,
+          dueTime: followUpTime,
+          priority: followUpPriority,
+        }
+      )
+
+      setCurrentFollowUp(newFollowUp)
+      setFollowUpSaved(true)
+
+      // Also update via server action
       await updateFollowUp({
         leadId,
         followUpDate: followUpDate || null,
         followUpNotes,
       })
+
+      // Add note to activity
+      const followUpNote = {
+        id: `note-followup-${Date.now()}`,
+        content: `📅 Follow-up scheduled for ${formatFollowUpDate(followUpDate)} at ${followUpTime}${followUpNotes ? `: ${followUpNotes}` : ''}`,
+        noteType: 'note',
+        createdAt: new Date().toISOString(),
+      }
+      setNotes(prev => [followUpNote, ...prev])
+
+      setTimeout(() => setFollowUpSaved(false), 5000)
     })
+  }
+
+  // Handle calendar export
+  const handleExportToGoogle = () => {
+    if (!currentFollowUp) return
+    const url = generateGoogleCalendarUrl(currentFollowUp)
+    window.open(url, '_blank')
+  }
+
+  const handleExportToOutlook = () => {
+    if (!currentFollowUp) return
+    const url = generateOutlookCalendarUrl(currentFollowUp)
+    window.open(url, '_blank')
+  }
+
+  const handleDownloadIcal = () => {
+    if (!currentFollowUp) return
+    downloadICalEvent(currentFollowUp)
   }
 
   // Save outcome
@@ -451,21 +519,145 @@ export default function LeadDetailPage() {
 
           {/* Right column - Notes & Follow-up */}
           <div className="space-y-6">
-            {/* Follow-up */}
-            <Card>
+            {/* Follow-up with Calendar Integration */}
+            <Card className={currentFollowUp ? 'border-violet-300 bg-violet-50/30' : ''}>
               <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-violet-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Follow-up</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-violet-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Follow-up</h2>
+                  </div>
+                  {followUpSaved && (
+                    <span className="flex items-center text-green-600 text-xs">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Scheduled
+                    </span>
+                  )}
                 </div>
 
-                <div className="space-y-4">
+                {/* Existing Follow-up Display */}
+                {currentFollowUp && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-violet-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {currentFollowUp.title}
+                      </span>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                        currentFollowUp.priority === 'high' ? 'bg-red-100 text-red-700' :
+                        currentFollowUp.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {currentFollowUp.priority}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatFollowUpDate(currentFollowUp.dueDate)}</span>
+                      {currentFollowUp.dueTime && (
+                        <>
+                          <span>•</span>
+                          <span>{currentFollowUp.dueTime}</span>
+                        </>
+                      )}
+                      {getDaysUntil(currentFollowUp.dueDate) <= 1 && getDaysUntil(currentFollowUp.dueDate) >= 0 && (
+                        <span className="flex items-center text-amber-600">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {getDaysUntil(currentFollowUp.dueDate) === 0 ? '¡Hoy!' : 'Mañana'}
+                        </span>
+                      )}
+                      {getDaysUntil(currentFollowUp.dueDate) < 0 && (
+                        <span className="flex items-center text-red-600">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Vencido
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Calendar Export Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={handleExportToGoogle}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Google
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={handleExportToOutlook}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Outlook
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={handleDownloadIcal}
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        .ics
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* New Follow-up Form */}
+                <div className="space-y-3">
                   <Input
-                    type="date"
-                    label="Follow-up Date"
-                    value={followUpDate}
-                    onChange={(e) => setFollowUpDate(e.target.value)}
+                    label="Title"
+                    placeholder="Follow-up call, Send proposal..."
+                    value={followUpTitle}
+                    onChange={(e) => setFollowUpTitle(e.target.value)}
                   />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      type="date"
+                      label="Date"
+                      value={followUpDate}
+                      onChange={(e) => setFollowUpDate(e.target.value)}
+                    />
+                    <Input
+                      type="time"
+                      label="Time"
+                      value={followUpTime}
+                      onChange={(e) => setFollowUpTime(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Priority Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority
+                    </label>
+                    <div className="flex gap-2">
+                      {(['high', 'medium', 'low'] as const).map((priority) => (
+                        <button
+                          key={priority}
+                          type="button"
+                          onClick={() => setFollowUpPriority(priority)}
+                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all border ${
+                            followUpPriority === priority
+                              ? priority === 'high'
+                                ? 'bg-red-100 text-red-700 border-red-300'
+                                : priority === 'medium'
+                                ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                : 'bg-gray-100 text-gray-700 border-gray-300'
+                              : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {priority === 'high' ? '🔥 Alta' :
+                           priority === 'medium' ? '⚡ Media' : '📌 Baja'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <Textarea
                     label="Notes"
                     placeholder="What to follow up on..."
@@ -473,14 +665,14 @@ export default function LeadDetailPage() {
                     onChange={(e) => setFollowUpNotes(e.target.value)}
                     rows={2}
                   />
+
                   <Button
-                    variant="outline"
                     className="w-full"
                     onClick={handleUpdateFollowUp}
-                    disabled={isPending}
+                    disabled={isPending || !followUpDate}
                   >
-                    <Clock className="w-4 h-4 mr-2" />
-                    Set Reminder
+                    <Bell className="w-4 h-4 mr-2" />
+                    {currentFollowUp ? 'Update Reminder' : 'Schedule Follow-up'}
                   </Button>
                 </div>
               </CardContent>

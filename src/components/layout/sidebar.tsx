@@ -11,7 +11,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Target
+  Target,
+  CalendarClock
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -20,6 +21,7 @@ import { useRouter } from 'next/navigation'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Leads', href: '/leads', icon: Users },
+  { name: 'Follow-ups', href: '/followups', icon: CalendarClock },
   { name: 'Scorecard', href: '/scorecard', icon: ClipboardCheck },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
