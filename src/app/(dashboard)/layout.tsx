@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/sidebar'
+import { OnboardingProvider } from '@/components/onboarding'
 
 export default function DashboardLayout({
   children,
@@ -9,7 +10,9 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-auto">
-        {children}
+        <OnboardingProvider>
+          {children}
+        </OnboardingProvider>
       </main>
     </div>
   )

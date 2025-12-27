@@ -76,12 +76,17 @@ export default function DashboardPage() {
       <Header
         title="Dashboard"
         subtitle="Overview of your lead qualification metrics"
+        action={{
+          label: 'New Scorecard',
+          href: '/scorecard',
+          dataTour: 'new-scorecard'
+        }}
       />
 
       <div className="p-6 space-y-6">
         {/* Follow-up Reminders Widget */}
         {reviewLeads.length > 0 && (
-          <Card className="border-yellow-200 bg-yellow-50">
+          <Card data-tour="follow-up-widget" className="border-yellow-200 bg-yellow-50">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -139,7 +144,7 @@ export default function DashboardPage() {
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="stats-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardContent className="p-6">

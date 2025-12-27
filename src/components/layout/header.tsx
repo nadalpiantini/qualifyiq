@@ -1,13 +1,22 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, Plus } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { ReactNode } from 'react'
 
 interface HeaderProps {
   title: string
   subtitle?: string
+  action?: {
+    label: string
+    href: string
+    icon?: ReactNode
+    dataTour?: string
+  }
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, action }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -19,6 +28,15 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {action && (
+            <Link href={action.href}>
+              <Button data-tour={action.dataTour}>
+                {action.icon || <Plus className="w-4 h-4 mr-2" />}
+                {action.label}
+              </Button>
+            </Link>
+          )}
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
