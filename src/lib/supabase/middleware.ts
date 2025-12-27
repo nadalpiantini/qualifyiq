@@ -1,12 +1,22 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const DEMO_MODE_COOKIE = 'qualifyiq-demo-mode'
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
 
-  // Skip auth in demo mode (when Supabase isn't configured)
+  // Check for demo mode cookie
+  const isDemoMode = request.cookies.get(DEMO_MODE_COOKIE)?.value === 'true'
+
+  // Skip auth check if in demo mode
+  if (isDemoMode) {
+    return supabaseResponse
+  }
+
+  // Skip auth in development mode (when Supabase isn't configured)
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return supabaseResponse
   }

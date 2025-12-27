@@ -1,5 +1,10 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { enableDemoMode } from '@/lib/demo-mode'
 import {
   Target,
   CheckCircle2,
@@ -12,6 +17,16 @@ import {
 } from 'lucide-react'
 
 export default function HomePage() {
+  const router = useRouter()
+
+  const handleViewDemo = () => {
+    enableDemoMode()
+    toast.info('Demo Mode Enabled', {
+      description: 'Exploring QualifyIQ with sample data.',
+      duration: 4000,
+    })
+    router.push('/dashboard')
+  }
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -62,11 +77,14 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/dashboard">
-              <Button variant="outline" size="lg" className="text-base">
-                View Demo
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-base"
+              onClick={handleViewDemo}
+            >
+              View Demo
+            </Button>
           </div>
           <p className="mt-4 text-sm text-gray-500">
             No credit card required • 14-day free trial

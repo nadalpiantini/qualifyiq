@@ -3,16 +3,19 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { enableDemoMode } from '@/lib/demo-mode'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Target } from 'lucide-react'
+import { Target, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const supabase = createClient()
@@ -30,20 +33,36 @@ export default function LoginPage() {
 
       if (error) {
         setError(error.message)
+        toast.error('Login failed', { description: error.message })
       } else {
+        toast.success('Welcome back!', { description: 'Redirecting to dashboard...' })
         router.push('/dashboard')
         router.refresh()
       }
     } catch {
       setError('An unexpected error occurred')
+      toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
   }
 
-  // Demo login for testing without Supabase
+  // Demo login for testing without authentication
   const handleDemoLogin = () => {
-    router.push('/dashboard')
+    setDemoLoading(true)
+
+    // Enable demo mode cookie
+    enableDemoMode()
+
+    toast.info('Demo Mode Enabled', {
+      description: 'Exploring QualifyIQ with sample data. No data will be saved.',
+      duration: 5000,
+    })
+
+    // Small delay for better UX
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 500)
   }
 
   return (
@@ -102,8 +121,15 @@ export default function LoginPage() {
                 </a>
               </div>
 
-              <Button type="submit" className="w-full" loading={loading}>
-                Sign In
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
               </Button>
 
               <div className="relative my-6">
@@ -120,9 +146,21 @@ export default function LoginPage() {
                 variant="outline"
                 className="w-full"
                 onClick={handleDemoLogin}
+                disabled={demoLoading}
               >
-                Continue with Demo Account
+                {demoLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading demo...
+                  </>
+                ) : (
+                  'Continue with Demo Account'
+                )}
               </Button>
+
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Demo mode lets you explore with sample data
+              </p>
             </form>
 
             <p className="mt-6 text-center text-sm text-gray-600">

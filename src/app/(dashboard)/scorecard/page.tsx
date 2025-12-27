@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ScoreSlider } from '@/components/ui/score-slider'
-import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, Save } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, Save, Loader2 } from 'lucide-react'
+import { saveScorecard } from '@/app/actions/scorecard'
 
 const RED_FLAGS = [
   { id: 'unrealistic_timeline', label: 'Unrealistic timeline expectations' },
@@ -21,6 +24,9 @@ const RED_FLAGS = [
 ]
 
 export default function ScorecardPage() {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState(1)
   const [leadInfo, setLeadInfo] = useState({
     companyName: '',
@@ -45,15 +51,15 @@ export default function ScorecardPage() {
   const [redFlags, setRedFlags] = useState<string[]>([])
   const [redFlagNotes, setRedFlagNotes] = useState('')
 
-  // Calculate total score (weighted)
+  // Calculate total score (weighted) - weights MUST sum to 1.0
   const calculateScore = () => {
     const weights = {
-      budget: 0.20,
-      authority: 0.15,
-      need: 0.25,
-      timeline: 0.15,
-      technicalFit: 0.15,
-    }
+      budget: 0.20,      // 20% - Financial readiness
+      authority: 0.20,   // 20% - Decision maker access (was 15%)
+      need: 0.25,        // 25% - Problem urgency (highest weight)
+      timeline: 0.15,    // 15% - Implementation timeline
+      technicalFit: 0.20, // 20% - Solution compatibility (was 15%)
+    } // Total: 100%
 
     const baseScore = (
       scores.budget * weights.budget +
@@ -86,18 +92,33 @@ export default function ScorecardPage() {
     )
   }
 
-  const handleSubmit = async () => {
-    // TODO: Save to Supabase
-    console.log({
-      leadInfo,
-      scores,
-      notes,
-      redFlags,
-      redFlagNotes,
-      totalScore,
-      recommendation: recommendation.label.toLowerCase(),
+  const handleSubmit = () => {
+    setError(null)
+
+    startTransition(async () => {
+      const result = await saveScorecard({
+        leadInfo,
+        scores,
+        notes,
+        redFlags,
+        redFlagNotes: redFlagNotes || '',
+        totalScore,
+        recommendation: recommendation.label.toLowerCase() as 'go' | 'review' | 'no_go',
+      })
+
+      if (result.success) {
+        toast.success('Scorecard saved!', {
+          description: `${leadInfo.companyName || 'Lead'} has been qualified with a ${recommendation.label} recommendation.`,
+        })
+        router.push(`/leads?created=${result.leadId}`)
+      } else {
+        const errorMsg = result.error || 'Failed to save scorecard'
+        setError(errorMsg)
+        toast.error('Failed to save scorecard', {
+          description: errorMsg,
+        })
+      }
     })
-    alert('Scorecard saved! (Demo mode - not connected to database)')
   }
 
   return (
@@ -438,13 +459,29 @@ export default function ScorecardPage() {
                   </div>
                 </div>
 
+                {/* Error Display */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
                 <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(3)}>
+                  <Button variant="outline" onClick={() => setStep(3)} disabled={isPending}>
                     Back
                   </Button>
-                  <Button onClick={handleSubmit}>
-                    <Save className="mr-2 w-4 h-4" />
-                    Save Scorecard
+                  <Button onClick={handleSubmit} disabled={isPending}>
+                    {isPending ? (
+                      <>
+                        <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 w-4 h-4" />
+                        Save Scorecard
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>

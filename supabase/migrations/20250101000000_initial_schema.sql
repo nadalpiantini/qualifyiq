@@ -200,6 +200,10 @@ CREATE POLICY "qualifyiq_users_update_scorecards"
   ON qualifyiq_scorecards FOR UPDATE
   USING (organization_id IN (SELECT organization_id FROM qualifyiq_profiles WHERE id = auth.uid()));
 
+CREATE POLICY "qualifyiq_admins_delete_scorecards"
+  ON qualifyiq_scorecards FOR DELETE
+  USING (organization_id IN (SELECT organization_id FROM qualifyiq_profiles WHERE id = auth.uid() AND role IN ('owner', 'admin')));
+
 -- Scoring configs policies
 CREATE POLICY "qualifyiq_users_view_config"
   ON qualifyiq_scoring_configs FOR SELECT

@@ -1,12 +1,68 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { User, Building2, Bell, Palette, Webhook } from 'lucide-react'
+import { User, Building2, Bell, Palette, Webhook, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 export default function SettingsPage() {
+  // Scoring weights state - corrected to sum to 100%
+  const [weights, setWeights] = useState({
+    budget: 20,
+    authority: 20, // Fixed from 15% to 20%
+    need: 25,
+    timeline: 15,
+    technicalFit: 20, // Fixed from 15% to 20%
+    redFlagPenalty: 5,
+  })
+
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [savingOrg, setSavingOrg] = useState(false)
+  const [savingConfig, setSavingConfig] = useState(false)
+
+  // Calculate total weights (excluding red flag penalty)
+  const totalWeight = weights.budget + weights.authority + weights.need + weights.timeline + weights.technicalFit
+  const isValidTotal = totalWeight === 100
+
+  const handleWeightChange = (field: keyof typeof weights, value: string) => {
+    const numValue = parseInt(value) || 0
+    setWeights(prev => ({ ...prev, [field]: numValue }))
+  }
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800))
+    setSavingProfile(false)
+    toast.success('Profile updated', { description: 'Your profile settings have been saved.' })
+  }
+
+  const handleSaveOrg = async () => {
+    setSavingOrg(true)
+    await new Promise(resolve => setTimeout(resolve, 800))
+    setSavingOrg(false)
+    toast.success('Organization updated', { description: 'Organization settings have been saved.' })
+  }
+
+  const handleSaveConfig = async () => {
+    if (!isValidTotal) {
+      toast.error('Invalid weights', {
+        description: `BANT weights must sum to 100%. Current total: ${totalWeight}%`,
+      })
+      return
+    }
+
+    setSavingConfig(true)
+    await new Promise(resolve => setTimeout(resolve, 800))
+    setSavingConfig(false)
+    toast.success('Scoring configuration saved', {
+      description: 'Your scoring weights have been updated.',
+    })
+  }
+
   return (
     <div className="min-h-screen">
       <Header
@@ -35,7 +91,16 @@ export default function SettingsPage() {
                 <Input label="Email" type="email" placeholder="john@company.com" />
               </div>
               <div className="flex justify-end">
-                <Button>Save Changes</Button>
+                <Button onClick={handleSaveProfile} disabled={savingProfile}>
+                  {savingProfile ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -59,7 +124,16 @@ export default function SettingsPage() {
                 <Input label="Slug" placeholder="acme" />
               </div>
               <div className="flex justify-end">
-                <Button>Save Changes</Button>
+                <Button onClick={handleSaveOrg} disabled={savingOrg}>
+                  {savingOrg ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -150,28 +224,85 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* BANT Weight inputs */}
                 {[
-                  { label: 'Budget Weight', value: 20 },
-                  { label: 'Authority Weight', value: 15 },
-                  { label: 'Need Weight', value: 25 },
-                  { label: 'Timeline Weight', value: 15 },
-                  { label: 'Technical Fit Weight', value: 15 },
-                  { label: 'Red Flag Penalty', value: 5 },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
+                  { label: 'Budget Weight', key: 'budget' as const },
+                  { label: 'Authority Weight', key: 'authority' as const },
+                  { label: 'Need Weight', key: 'need' as const },
+                  { label: 'Timeline Weight', key: 'timeline' as const },
+                  { label: 'Technical Fit Weight', key: 'technicalFit' as const },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">{item.label}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
-                        defaultValue={item.value}
-                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm text-center"
+                        value={weights[item.key]}
+                        onChange={(e) => handleWeightChange(item.key, e.target.value)}
+                        min={0}
+                        max={100}
+                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm text-center focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-colors"
                       />
                       <span className="text-gray-500">%</span>
                     </div>
                   </div>
                 ))}
+
+                {/* Total indicator */}
+                <div className={`flex items-center justify-between p-3 rounded-lg ${
+                  isValidTotal ? 'bg-green-50' : 'bg-amber-50'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {isValidTotal ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      isValidTotal ? 'text-green-700' : 'text-amber-700'
+                    }`}>
+                      {isValidTotal ? 'Weights are balanced' : 'Weights must sum to 100%'}
+                    </span>
+                  </div>
+                  <span className={`text-sm font-bold ${
+                    isValidTotal ? 'text-green-700' : 'text-amber-700'
+                  }`}>
+                    Total: {totalWeight}%
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Red Flag Penalty</label>
+                      <p className="text-xs text-gray-500">Points deducted per red flag</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={weights.redFlagPenalty}
+                        onChange={(e) => handleWeightChange('redFlagPenalty', e.target.value)}
+                        min={0}
+                        max={20}
+                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm text-center focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-colors"
+                      />
+                      <span className="text-gray-500">pts</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end pt-4">
-                  <Button>Save Configuration</Button>
+                  <Button onClick={handleSaveConfig} disabled={savingConfig || !isValidTotal}>
+                    {savingConfig ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Configuration'
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardContent>

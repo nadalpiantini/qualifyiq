@@ -33,6 +33,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       qualifyiq_profiles: {
         Row: {
@@ -62,6 +63,14 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'qualifyiq_profiles_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'qualifyiq_organizations'
+            referencedColumns: ['id']
+          }
+        ]
       }
       qualifyiq_leads: {
         Row: {
@@ -121,13 +130,26 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'qualifyiq_leads_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'qualifyiq_organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qualifyiq_leads_created_by_fkey'
+            columns: ['created_by']
+            referencedRelation: 'qualifyiq_profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
       qualifyiq_scorecards: {
         Row: {
           id: string
           lead_id: string
           organization_id: string
-          // BANT Scores (1-5)
           budget_score: number | null
           budget_notes: string | null
           authority_score: number | null
@@ -136,17 +158,12 @@ export interface Database {
           need_notes: string | null
           timeline_score: number | null
           timeline_notes: string | null
-          // Technical Fit (1-5)
           technical_fit_score: number | null
           technical_fit_notes: string | null
-          // Red Flags (JSON array)
           red_flags: Json
-          // Calculated
           weighted_score: number | null
           recommendation: 'go' | 'review' | 'no_go' | null
-          // Notes
           overall_notes: string | null
-          // Metadata
           created_by: string | null
           created_at: string
           updated_at: string
@@ -195,6 +212,26 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'qualifyiq_scorecards_lead_id_fkey'
+            columns: ['lead_id']
+            referencedRelation: 'qualifyiq_leads'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qualifyiq_scorecards_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'qualifyiq_organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qualifyiq_scorecards_created_by_fkey'
+            columns: ['created_by']
+            referencedRelation: 'qualifyiq_profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
       qualifyiq_scoring_configs: {
         Row: {
@@ -239,6 +276,14 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: 'qualifyiq_scoring_configs_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'qualifyiq_organizations'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
     Views: {
@@ -263,14 +308,12 @@ export interface Database {
           created_at: string
           updated_at: string
         }
+        Relationships: []
       }
     }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
 
