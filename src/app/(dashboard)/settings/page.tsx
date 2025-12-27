@@ -6,7 +6,8 @@ import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { User, Building2, Bell, Palette, Webhook, Loader2, AlertTriangle, CheckCircle2, Mail, Send, Clock } from 'lucide-react'
+import { User, Building2, Bell, Palette, Webhook, Loader2, AlertTriangle, CheckCircle2, Mail, Send, Clock, HelpCircle } from 'lucide-react'
+import { Tooltip, InfoTooltip } from '@/components/ui/tooltip'
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   sendTestNotification,
@@ -426,14 +427,19 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 {/* BANT Weight inputs */}
                 {[
-                  { label: 'Budget Weight', key: 'budget' as const },
-                  { label: 'Authority Weight', key: 'authority' as const },
-                  { label: 'Need Weight', key: 'need' as const },
-                  { label: 'Timeline Weight', key: 'timeline' as const },
-                  { label: 'Technical Fit Weight', key: 'technicalFit' as const },
+                  { label: 'Budget Weight', key: 'budget' as const, tooltip: 'Importancia del presupuesto disponible. Mayor peso = más impacto en el score final.' },
+                  { label: 'Authority Weight', key: 'authority' as const, tooltip: 'Importancia de hablar con el decisor. Mayor peso = más relevante la autoridad de compra.' },
+                  { label: 'Need Weight', key: 'need' as const, tooltip: 'Importancia de la necesidad real. Mayor peso = más crítico que exista una necesidad clara.' },
+                  { label: 'Timeline Weight', key: 'timeline' as const, tooltip: 'Importancia del timing. Mayor peso = más urgente que tengan fecha de decisión.' },
+                  { label: 'Technical Fit Weight', key: 'technicalFit' as const, tooltip: 'Importancia del ajuste técnico. Mayor peso = más crítico que podamos resolver su problema.' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700">{item.label}</label>
+                    <div className="flex items-center gap-1">
+                      <label className="text-sm font-medium text-gray-700">{item.label}</label>
+                      <Tooltip content={item.tooltip} position="right">
+                        <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600 cursor-help" />
+                      </Tooltip>
+                    </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"

@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ScoreSlider } from '@/components/ui/score-slider'
-import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Save, Loader2, Info } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Save, Loader2, Info, HelpCircle } from 'lucide-react'
+import { Tooltip, InfoTooltip } from '@/components/ui/tooltip'
 import { saveScorecard } from '@/app/actions/scorecard'
 
 const RED_FLAGS = [
@@ -215,6 +216,12 @@ export default function ScorecardPage() {
                     <CardTitle className="flex items-center gap-2">
                       Calificación BANT
                       <span className="text-sm font-normal text-gray-500">(Budget, Authority, Need, Timeline)</span>
+                      <Tooltip
+                        content="BANT es un método de calificación de ventas que evalúa: Presupuesto, Autoridad para decidir, Necesidad real y Timeline de compra."
+                        position="right"
+                      >
+                        <HelpCircle className="w-4 h-4 text-gray-400 hover:text-violet-600 cursor-help" />
+                      </Tooltip>
                     </CardTitle>
                     <CardDescription>
                       Asigna un puntaje de 1-5 en cada categoría. Las etiquetas te ayudan a decidir.
@@ -309,6 +316,12 @@ export default function ScorecardPage() {
                     <CardTitle className="flex items-center gap-2">
                       🚩 Red Flags
                       <span className="text-sm font-normal text-gray-500">(-5 puntos cada una)</span>
+                      <Tooltip
+                        content="Las red flags son señales de alerta que indican posibles problemas con el lead. Cada una resta 5 puntos del score final."
+                        position="right"
+                      >
+                        <HelpCircle className="w-4 h-4 text-gray-400 hover:text-violet-600 cursor-help" />
+                      </Tooltip>
                     </CardTitle>
                     <CardDescription>
                       Selecciona las señales de alerta que detectaste. Cada una reduce el score final.
@@ -371,7 +384,15 @@ export default function ScorecardPage() {
                     'border-red-200 bg-red-50'
                   }`}>
                     <CardContent className="p-6 text-center">
-                      <div className="text-sm text-gray-500 mb-2">Score en tiempo real</div>
+                      <div className="text-sm text-gray-500 mb-2 flex items-center justify-center gap-1">
+                        Score en tiempo real
+                        <Tooltip
+                          content="El score se calcula automáticamente según tus respuestas. GO (≥70): Proceder. REVIEW (50-69): Evaluar más. NO GO (<50): Declinar."
+                          position="left"
+                        >
+                          <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600 cursor-help" />
+                        </Tooltip>
+                      </div>
                       <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-3 ${
                         recommendation.color === 'green' ? 'ring-4 ring-green-200' :
                         recommendation.color === 'yellow' ? 'ring-4 ring-yellow-200' :

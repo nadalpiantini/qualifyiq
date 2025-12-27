@@ -18,9 +18,11 @@ import {
   Calendar,
   ArrowRight,
   Target,
-  BarChart3
+  BarChart3,
+  HelpCircle
 } from 'lucide-react'
 import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
+import { Tooltip, InfoTooltip } from '@/components/ui/tooltip'
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<typeof DEMO_LEADS>([])
@@ -92,7 +94,7 @@ export default function DashboardPage() {
       .sort((a, b) => b.count - a.count)
   }, [leads])
 
-  // Stats cards configuration
+  // Stats cards configuration with tooltips
   const stats = [
     {
       title: 'Total Leads',
@@ -101,6 +103,7 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: Users,
       color: 'violet',
+      tooltip: 'Número total de leads que has evaluado con el scorecard BANT',
     },
     {
       title: 'Qualified (GO)',
@@ -109,6 +112,7 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: CheckCircle2,
       color: 'green',
+      tooltip: 'Leads con score ≥70. Alta probabilidad de éxito, proceder con la venta',
     },
     {
       title: 'Disqualified (NO GO)',
@@ -117,6 +121,7 @@ export default function DashboardPage() {
       changeType: 'negative' as const,
       icon: XCircle,
       color: 'red',
+      tooltip: 'Leads con score <50. No cumplen criterios mínimos, declinar cortésmente',
     },
     {
       title: 'Avg. Score',
@@ -125,6 +130,7 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: TrendingUp,
       color: 'violet',
+      tooltip: 'Promedio de scores BANT. Valores altos indican mejor calidad de pipeline',
     },
   ]
 
@@ -207,7 +213,12 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">{stat.title}</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm text-gray-500">{stat.title}</p>
+                      <Tooltip content={stat.tooltip} position="top">
+                        <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600 cursor-help" />
+                      </Tooltip>
+                    </div>
                     <p className="text-3xl font-bold mt-1">{stat.value}</p>
                     <div className={`flex items-center gap-1 mt-2 text-sm ${
                       stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'

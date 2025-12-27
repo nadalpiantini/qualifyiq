@@ -19,8 +19,10 @@ import {
   Search,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  HelpCircle
 } from 'lucide-react'
+import { Tooltip } from '@/components/ui/tooltip'
 import Link from 'next/link'
 import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
 import { exportLeadsToCSV } from '@/lib/utils/export-csv'
@@ -101,6 +103,16 @@ export default function LeadsPage() {
     }
   }
 
+  // Column tooltips
+  const columnTooltips: Record<SortField, string> = {
+    companyName: 'Nombre de la empresa o cliente potencial',
+    contactName: 'Persona de contacto principal en la empresa',
+    source: 'Canal de origen del lead (LinkedIn, referido, web, etc.)',
+    score: 'Puntuación BANT del 0-100. Verde (≥70), Amarillo (50-69), Rojo (<50)',
+    status: 'Estado actual: Calificado, Pendiente o Descalificado',
+    createdAt: 'Fecha en que se evaluó el lead con el scorecard'
+  }
+
   // Sortable header component
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
@@ -109,6 +121,9 @@ export default function LeadsPage() {
     >
       <div className="flex items-center gap-1">
         {children}
+        <Tooltip content={columnTooltips[field]} position="top">
+          <HelpCircle className="w-3 h-3 text-gray-300 hover:text-gray-500" />
+        </Tooltip>
         {sortField === field ? (
           sortDirection === 'asc' ? (
             <ArrowUp className="w-3.5 h-3.5 text-violet-600" />
