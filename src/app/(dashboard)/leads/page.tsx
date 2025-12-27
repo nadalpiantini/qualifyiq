@@ -16,17 +16,28 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Search
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
 import { exportLeadsToCSV } from '@/lib/utils/export-csv'
+import { cn } from '@/lib/utils/cn'
+
+type SortField = 'companyName' | 'contactName' | 'source' | 'score' | 'status' | 'createdAt'
+type SortDirection = 'asc' | 'desc'
 
 export default function LeadsPage() {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [leads, setLeads] = useState(DEMO_LEADS)
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  // Sorting
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Advanced filters
   const [sourceFilter, setSourceFilter] = useState('all')
@@ -70,8 +81,40 @@ export default function LeadsPage() {
     setDateTo('')
   }
 
+  // Handle column sort
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  // Sortable header component
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <th
+      className="text-left py-4 px-6 text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === 'asc' ? (
+            <ArrowUp className="w-3.5 h-3.5 text-violet-600" />
+          ) : (
+            <ArrowDown className="w-3.5 h-3.5 text-violet-600" />
+          )
+        ) : (
+          <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+        )}
+      </div>
+    </th>
+  )
+
   const filteredLeads = useMemo(() => {
-    return leads.filter(lead => {
+    // First filter
+    const filtered = leads.filter(lead => {
       // Recommendation filter
       const matchesRecommendation = filter === 'all' || lead.recommendation === filter
 
@@ -100,7 +143,46 @@ export default function LeadsPage() {
 
       return matchesRecommendation && matchesSearch && matchesSource && matchesScore && matchesDateFrom && matchesDateTo
     })
-  }, [leads, filter, search, sourceFilter, scoreMin, scoreMax, dateFrom, dateTo])
+
+    // Then sort
+    return [...filtered].sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (sortField) {
+        case 'companyName':
+          aValue = a.companyName.toLowerCase()
+          bValue = b.companyName.toLowerCase()
+          break
+        case 'contactName':
+          aValue = a.contactName.toLowerCase()
+          bValue = b.contactName.toLowerCase()
+          break
+        case 'source':
+          aValue = a.source.toLowerCase()
+          bValue = b.source.toLowerCase()
+          break
+        case 'score':
+          aValue = a.score
+          bValue = b.score
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        case 'createdAt':
+          aValue = new Date(a.createdAt).getTime()
+          bValue = new Date(b.createdAt).getTime()
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [leads, filter, search, sourceFilter, scoreMin, scoreMax, dateFrom, dateTo, sortField, sortDirection])
 
   return (
     <div className="min-h-screen">
@@ -304,12 +386,12 @@ export default function LeadsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Empresa</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Contacto</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Fuente</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Score</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Estado</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Fecha</th>
+                    <SortableHeader field="companyName">Empresa</SortableHeader>
+                    <SortableHeader field="contactName">Contacto</SortableHeader>
+                    <SortableHeader field="source">Fuente</SortableHeader>
+                    <SortableHeader field="score">Score</SortableHeader>
+                    <SortableHeader field="status">Estado</SortableHeader>
+                    <SortableHeader field="createdAt">Fecha</SortableHeader>
                     <th className="text-right py-4 px-6 text-sm font-medium text-gray-500">Acciones</th>
                   </tr>
                 </thead>
