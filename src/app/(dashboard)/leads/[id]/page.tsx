@@ -24,7 +24,11 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Trophy,
+  ThumbsUp,
+  ThumbsDown,
+  HelpCircle
 } from 'lucide-react'
 import { getLead, updateScorecard, addLeadNote, updateFollowUp } from '@/app/actions/leads'
 import { isDemoMode, DEMO_LEADS, DEMO_SCORECARDS, RED_FLAGS } from '@/lib/demo-mode'
@@ -97,6 +101,12 @@ export default function LeadDetailPage() {
   // Follow-up
   const [followUpDate, setFollowUpDate] = useState('')
   const [followUpNotes, setFollowUpNotes] = useState('')
+
+  // Outcome tracking
+  const [outcome, setOutcome] = useState<'pending' | 'won' | 'lost' | null>(null)
+  const [outcomeNotes, setOutcomeNotes] = useState('')
+  const [closedDate, setClosedDate] = useState('')
+  const [outcomeSaveSuccess, setOutcomeSaveSuccess] = useState(false)
 
   // Load lead data
   useEffect(() => {
@@ -221,6 +231,38 @@ export default function LeadDetailPage() {
         followUpDate: followUpDate || null,
         followUpNotes,
       })
+    })
+  }
+
+  // Save outcome
+  const handleSaveOutcome = () => {
+    if (!outcome || outcome === 'pending') return
+
+    startTransition(async () => {
+      // In demo mode, just update local state
+      if (isDemoMode()) {
+        // Add an outcome note to the activity log
+        const outcomeNote = {
+          id: `note-outcome-${Date.now()}`,
+          content: `Lead marked as ${outcome === 'won' ? '✅ WON' : '❌ LOST'}${outcomeNotes ? `: ${outcomeNotes}` : ''}`,
+          noteType: 'outcome',
+          createdAt: new Date().toISOString(),
+        }
+        setNotes(prev => [outcomeNote, ...prev])
+        setOutcomeSaveSuccess(true)
+        setTimeout(() => setOutcomeSaveSuccess(false), 3000)
+      } else {
+        // Real implementation would call a server action
+        const outcomeNote = {
+          id: `note-outcome-${Date.now()}`,
+          content: `Lead marked as ${outcome === 'won' ? '✅ WON' : '❌ LOST'}${outcomeNotes ? `: ${outcomeNotes}` : ''}`,
+          noteType: 'outcome',
+          createdAt: new Date().toISOString(),
+        }
+        setNotes(prev => [outcomeNote, ...prev])
+        setOutcomeSaveSuccess(true)
+        setTimeout(() => setOutcomeSaveSuccess(false), 3000)
+      }
     })
   }
 
@@ -542,6 +584,125 @@ export default function LeadDetailPage() {
                     <dd className="text-gray-900">{new Date(lead.createdAt).toLocaleDateString()}</dd>
                   </div>
                 </dl>
+              </CardContent>
+            </Card>
+
+            {/* Outcome Tracking - Feedback Loop */}
+            <Card className="border-2 border-dashed border-violet-200 bg-violet-50/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-violet-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Outcome Tracking</h2>
+                  </div>
+                  {outcomeSaveSuccess && (
+                    <span className="flex items-center text-green-600 text-xs">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Saved
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Record the final outcome to improve prediction accuracy
+                </p>
+
+                {/* Outcome Selection */}
+                <div className="flex gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setOutcome('won')}
+                    className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      outcome === 'won'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50/50'
+                    }`}
+                  >
+                    <ThumbsUp className="w-5 h-5" />
+                    <span className="font-medium">Won</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOutcome('lost')}
+                    className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      outcome === 'lost'
+                        ? 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:bg-red-50/50'
+                    }`}
+                  >
+                    <ThumbsDown className="w-5 h-5" />
+                    <span className="font-medium">Lost</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOutcome('pending')}
+                    className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      outcome === 'pending'
+                        ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-yellow-300 hover:bg-yellow-50/50'
+                    }`}
+                  >
+                    <HelpCircle className="w-5 h-5" />
+                    <span className="font-medium">Pending</span>
+                  </button>
+                </div>
+
+                {/* Outcome Details (show when outcome selected) */}
+                {outcome && outcome !== 'pending' && (
+                  <div className="space-y-3 animate-in fade-in duration-200">
+                    <Input
+                      type="date"
+                      label="Close Date"
+                      value={closedDate}
+                      onChange={(e) => setClosedDate(e.target.value)}
+                    />
+                    <Textarea
+                      label="Outcome Notes"
+                      placeholder={outcome === 'won' ? 'What made this deal successful?' : 'Why was this lead lost?'}
+                      value={outcomeNotes}
+                      onChange={(e) => setOutcomeNotes(e.target.value)}
+                      rows={2}
+                    />
+                    <Button
+                      className="w-full"
+                      onClick={handleSaveOutcome}
+                      disabled={isPending}
+                    >
+                      {outcome === 'won' ? (
+                        <>
+                          <Trophy className="w-4 h-4 mr-2" />
+                          Record Win
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Record Loss
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Prediction Accuracy Info */}
+                <div className="mt-4 p-3 bg-white rounded-lg border border-violet-200">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`w-3 h-3 rounded-full ${
+                      recommendation === 'go' ? 'bg-green-500' :
+                      recommendation === 'review' ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }`} />
+                    <span className="text-gray-600">
+                      AI predicted: <span className="font-medium text-gray-900">
+                        {recommendation === 'go' ? 'GO (likely success)' :
+                         recommendation === 'review' ? 'REVIEW (uncertain)' :
+                         'NO GO (unlikely)'}
+                      </span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Recording outcomes helps improve future predictions
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
