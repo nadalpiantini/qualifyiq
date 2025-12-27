@@ -39,6 +39,10 @@ export default function LeadsPage() {
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
   // Advanced filters
   const [sourceFilter, setSourceFilter] = useState('all')
   const [scoreMin, setScoreMin] = useState('')
@@ -79,7 +83,13 @@ export default function LeadsPage() {
     setScoreMax('')
     setDateFrom('')
     setDateTo('')
+    setCurrentPage(1)
   }
+
+  // Reset to page 1 when any filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter, search, sourceFilter, scoreMin, scoreMax, dateFrom, dateTo, pageSize])
 
   // Handle column sort
   const handleSort = (field: SortField) => {
@@ -183,6 +193,34 @@ export default function LeadsPage() {
       return 0
     })
   }, [leads, filter, search, sourceFilter, scoreMin, scoreMax, dateFrom, dateTo, sortField, sortDirection])
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredLeads.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex)
+
+  // Page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const showPages = 5
+
+    if (totalPages <= showPages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      pages.push(1)
+      if (currentPage > 3) pages.push('...')
+
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+
+      for (let i = start; i <= end; i++) pages.push(i)
+
+      if (currentPage < totalPages - 2) pages.push('...')
+      pages.push(totalPages)
+    }
+    return pages
+  }
 
   return (
     <div className="min-h-screen">
@@ -396,7 +434,7 @@ export default function LeadsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLeads.map((lead) => (
+                  {paginatedLeads.map((lead) => (
                     <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
                         <div>
@@ -460,7 +498,7 @@ export default function LeadsPage() {
               </table>
             </div>
 
-            {filteredLeads.length === 0 && (
+            {paginatedLeads.length === 0 && (
               <div className="py-12 text-center">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
                   <Search className="w-6 h-6 text-gray-400" />
@@ -479,16 +517,78 @@ export default function LeadsPage() {
         </Card>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
-            Mostrando {filteredLeads.length} de {leads.length} leads
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>
-              Anterior
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-500">
+              Mostrando {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} de {filteredLeads.length} leads
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Por página:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              «
             </Button>
-            <Button variant="outline" size="sm" disabled>
-              Siguiente
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              ‹
+            </Button>
+
+            {getPageNumbers().map((page, idx) => (
+              typeof page === 'number' ? (
+                <Button
+                  key={idx}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className={cn(
+                    'min-w-[36px]',
+                    currentPage === page && 'bg-violet-600 hover:bg-violet-700'
+                  )}
+                >
+                  {page}
+                </Button>
+              ) : (
+                <span key={idx} className="px-2 text-gray-400">...</span>
+              )
+            ))}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              ›
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              »
             </Button>
           </div>
         </div>
