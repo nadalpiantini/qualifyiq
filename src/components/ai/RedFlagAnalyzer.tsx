@@ -303,7 +303,7 @@ function RedFlagCard({
           <p className="text-sm text-gray-700 mt-1">{flag.explanation}</p>
           {flag.quote && (
             <p className="text-xs text-gray-500 mt-2 italic border-l-2 border-gray-300 pl-2">
-              "{flag.quote}"
+              &ldquo;{flag.quote}&rdquo;
             </p>
           )}
           {flag.suggestion && (

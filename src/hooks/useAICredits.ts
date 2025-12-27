@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useSyncExternalStore } from 'react';
 import type { AIUsage } from '@/types/ai.types';
 
 interface UseAICreditsReturn {
   credits: AIUsage | null;
   isLoading: boolean;
-  refresh: () => Promise<void>;
+  refresh: () => void;
   hasCredits: boolean;
 }
 
@@ -25,44 +25,79 @@ const getDefaultCredits = (): AIUsage => {
   };
 };
 
-export function useAICredits(): UseAICreditsReturn {
-  const [credits, setCredits] = useState<AIUsage | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+// Store for external sync
+let listeners: Array<() => void> = [];
+let cachedCredits: AIUsage | null = null;
 
-  const loadCredits = useCallback(() => {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as AIUsage;
-        const resetDate = new Date(parsed.resetDate);
+function subscribe(listener: () => void) {
+  listeners = [...listeners, listener];
+  return () => {
+    listeners = listeners.filter(l => l !== listener);
+  };
+}
 
-        // Si ya pasó la fecha de reset, reiniciar créditos
-        if (resetDate < new Date()) {
-          const newCredits = getDefaultCredits();
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newCredits));
-          setCredits(newCredits);
-        } else {
-          setCredits(parsed);
-        }
-      } else {
+function getSnapshot(): AIUsage | null {
+  return cachedCredits;
+}
+
+function getServerSnapshot(): AIUsage | null {
+  return null;
+}
+
+function loadCreditsFromStorage(): AIUsage {
+  if (typeof window === 'undefined') {
+    return getDefaultCredits();
+  }
+
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as AIUsage;
+      const resetDate = new Date(parsed.resetDate);
+
+      // Si ya pasó la fecha de reset, reiniciar créditos
+      if (resetDate < new Date()) {
         const newCredits = getDefaultCredits();
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newCredits));
-        setCredits(newCredits);
+        return newCredits;
       }
-    } catch {
-      setCredits(getDefaultCredits());
+      return parsed;
     }
+  } catch {
+    // Ignore errors
+  }
+
+  const newCredits = getDefaultCredits();
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newCredits));
+  return newCredits;
+}
+
+// Initialize on client side
+if (typeof window !== 'undefined') {
+  cachedCredits = loadCreditsFromStorage();
+}
+
+function notifyListeners() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+export function useAICredits(): UseAICreditsReturn {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const credits = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
+
+  const refresh = useCallback(() => {
+    setIsLoading(true);
+    cachedCredits = loadCreditsFromStorage();
+    notifyListeners();
     setIsLoading(false);
   }, []);
-
-  useEffect(() => {
-    loadCredits();
-  }, [loadCredits]);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    loadCredits();
-  }, [loadCredits]);
 
   return {
     credits,
@@ -81,6 +116,8 @@ export function decrementAICredits(): void {
       credits.creditsUsed++;
       credits.creditsRemaining = Math.max(0, credits.creditsRemaining - 1);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(credits));
+      cachedCredits = credits;
+      notifyListeners();
     }
   } catch (error) {
     console.error('Error decrementing AI credits:', error);
