@@ -3,13 +3,21 @@
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { DEMO_COOKIE_NAME } from '@/lib/demo-mode'
+
+// Check if in demo mode from server
+async function isDemoModeServer(): Promise<boolean> {
+  const cookieStore = await cookies()
+  return cookieStore.get(DEMO_COOKIE_NAME)?.value === 'true'
+}
 
 // Validation schema for scorecard submission
 const ScorecardSchema = z.object({
   leadInfo: z.object({
     companyName: z.string().min(1, 'Company name is required').max(200),
-    contactName: z.string().min(1, 'Contact name is required').max(200),
-    contactEmail: z.string().email('Invalid email address'),
+    contactName: z.string().max(200).optional().default(''),
+    contactEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
     source: z.string().max(100).optional(),
   }),
   scores: z.object({
@@ -51,6 +59,18 @@ export async function saveScorecard(data: ScorecardInput): Promise<ActionResult>
   }
 
   const { leadInfo, scores, notes, redFlags, redFlagNotes, totalScore, recommendation } = parsed.data
+
+  // Check if in demo mode - return mock success without hitting database
+  if (await isDemoModeServer()) {
+    // Simulate successful save with demo IDs
+    revalidatePath('/leads')
+    revalidatePath('/dashboard')
+    return {
+      success: true,
+      leadId: `demo-lead-${Date.now()}`,
+      scorecardId: `demo-scorecard-${Date.now()}`,
+    }
+  }
 
   try {
     const supabase = await createClient()

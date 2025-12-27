@@ -59,9 +59,10 @@ export default function LoginPage() {
       duration: 5000,
     })
 
-    // Small delay for better UX
+    // Use hard navigation to ensure cookie is read by middleware on server
+    // router.push() does client-side navigation which might not re-check cookies
     setTimeout(() => {
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }, 500)
   }
 
