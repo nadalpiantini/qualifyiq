@@ -67,7 +67,7 @@ function formatDate(dateStr: string, format: 'iso' | 'local'): string {
   if (format === 'iso') {
     return date.toISOString().split('T')[0]
   }
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
@@ -87,14 +87,14 @@ export function generateLeadsCSV(
   } = options
 
   const headers = [
-    'Empresa',
-    'Contacto',
+    'Company',
+    'Contact',
     'Email',
-    'Fuente',
+    'Source',
     'Score',
-    'Recomendación',
-    'Estado',
-    'Fecha Creación'
+    'Recommendation',
+    'Status',
+    'Created Date'
   ]
 
   const rows: string[] = []

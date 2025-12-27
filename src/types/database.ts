@@ -170,6 +170,11 @@ export interface Database {
           weighted_score: number | null
           recommendation: 'go' | 'review' | 'no_go' | null
           overall_notes: string | null
+          // AI Analysis fields
+          ai_company_analysis: Json | null
+          ai_suggestions: Json | null
+          ai_confidence: number | null
+          ai_analysis_timestamp: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -192,6 +197,11 @@ export interface Database {
           weighted_score?: number | null
           recommendation?: 'go' | 'review' | 'no_go' | null
           overall_notes?: string | null
+          // AI Analysis fields
+          ai_company_analysis?: Json | null
+          ai_suggestions?: Json | null
+          ai_confidence?: number | null
+          ai_analysis_timestamp?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -214,6 +224,11 @@ export interface Database {
           weighted_score?: number | null
           recommendation?: 'go' | 'review' | 'no_go' | null
           overall_notes?: string | null
+          // AI Analysis fields
+          ai_company_analysis?: Json | null
+          ai_suggestions?: Json | null
+          ai_confidence?: number | null
+          ai_analysis_timestamp?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -298,6 +313,7 @@ export interface Database {
           organization_id: string
           content: string
           note_type: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          ai_generated: boolean
           created_by: string | null
           created_at: string
           updated_at: string
@@ -308,6 +324,7 @@ export interface Database {
           organization_id: string
           content: string
           note_type?: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          ai_generated?: boolean
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -318,6 +335,7 @@ export interface Database {
           organization_id?: string
           content?: string
           note_type?: 'note' | 'call' | 'email' | 'meeting' | 'status_change' | 'outcome'
+          ai_generated?: boolean
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -385,3 +403,34 @@ export type LeadUpdate = Database['public']['Tables']['qualifyiq_leads']['Update
 
 // Lead with score info from view
 export type LeadWithScore = Database['public']['Views']['qualifyiq_leads_with_scores']['Row']
+
+// AI Analysis types
+export interface AICompanyAnalysis {
+  companySize: 'startup' | 'pyme' | 'midmarket' | 'enterprise' | 'unknown'
+  employeeEstimate: string
+  industry: string[]
+  revenueEstimate: string
+  buyingSignals: string[]
+  potentialRedFlags: string[]
+  suggestedBANT: {
+    budget: number | null
+    authority: number | null
+    need: number | null
+    timeline: number | null
+    technicalFit: number | null
+  }
+  discoveryQuestions: string[]
+  confidence: number
+}
+
+export interface AISuggestions {
+  bantScores: {
+    budget?: number
+    authority?: number
+    need?: number
+    timeline?: number
+    technicalFit?: number
+  }
+  redFlagsToAdd: string[]
+  notes: string
+}

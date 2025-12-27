@@ -14,7 +14,7 @@ import {
   Target,
   CalendarClock
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback, useMemo, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -30,20 +30,31 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
-  const supabase = createClient()
+  const [isPending, startTransition] = useTransition()
 
-  const handleLogout = async () => {
+  // Memoize supabase client to avoid recreation on every render
+  const supabase = useMemo(() => createClient(), [])
+
+  const handleCollapse = useCallback(() => {
+    // Use startTransition for non-urgent UI updates
+    startTransition(() => {
+      setCollapsed(prev => !prev)
+    })
+  }, [])
+
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut()
     router.push('/auth/login')
     router.refresh()
-  }
+  }, [supabase, router])
 
   return (
     <aside
       data-tour="sidebar"
       className={cn(
-        'flex flex-col h-screen bg-gray-900 text-white transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64'
+        'flex flex-col h-screen bg-gray-900 text-white transition-[width] duration-200 ease-out will-change-[width]',
+        collapsed ? 'w-16' : 'w-64',
+        isPending && 'opacity-90'
       )}
     >
       {/* Logo */}
@@ -88,8 +99,9 @@ export function Sidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-gray-800 space-y-2">
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+          onClick={handleCollapse}
+          disabled={isPending}
+          className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
         >
           {collapsed ? (
             <ChevronRight className="w-5 h-5 mx-auto" />

@@ -54,10 +54,13 @@ export default function LeadsPage() {
 
   useEffect(() => {
     // In demo mode, use DEMO_LEADS; otherwise, fetch from API
-    if (isDemoMode()) {
-      setLeads(DEMO_LEADS)
+    const loadLeads = () => {
+      if (isDemoMode()) {
+        setLeads(DEMO_LEADS)
+      }
+      // TODO: Add real data fetching here
     }
-    // TODO: Add real data fetching here
+    loadLeads()
   }, [])
 
   // Get unique sources for dropdown
@@ -105,12 +108,12 @@ export default function LeadsPage() {
 
   // Column tooltips
   const columnTooltips: Record<SortField, string> = {
-    companyName: 'Nombre de la empresa o cliente potencial',
-    contactName: 'Persona de contacto principal en la empresa',
-    source: 'Canal de origen del lead (LinkedIn, referido, web, etc.)',
-    score: 'Puntuación BANT del 0-100. Verde (≥70), Amarillo (50-69), Rojo (<50)',
-    status: 'Estado actual: Calificado, Pendiente o Descalificado',
-    createdAt: 'Fecha en que se evaluó el lead con el scorecard'
+    companyName: 'Company or potential client name',
+    contactName: 'Primary contact person at the company',
+    source: 'Lead source channel (LinkedIn, referral, website, etc.)',
+    score: 'BANT score from 0-100. Green (≥70), Yellow (50-69), Red (<50)',
+    status: 'Current status: Qualified, Pending, or Disqualified',
+    createdAt: 'Date when the lead was evaluated with the scorecard'
   }
 
   // Sortable header component
@@ -241,7 +244,7 @@ export default function LeadsPage() {
     <div className="min-h-screen">
       <Header
         title="Leads"
-        subtitle="Gestiona y da seguimiento a todos tus leads calificados"
+        subtitle="Manage and track all your qualified leads"
       />
 
       <div className="p-6 space-y-4">
@@ -252,7 +255,7 @@ export default function LeadsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Buscar empresa, contacto, email..."
+                placeholder="Search company, contact, email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-72 pl-10"
@@ -274,7 +277,7 @@ export default function LeadsPage() {
                       : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  {f === 'all' ? 'Todos' : f === 'go' ? 'GO' : f === 'review' ? 'Revisar' : 'NO GO'}
+                  {f === 'all' ? 'All' : f === 'go' ? 'GO' : f === 'review' ? 'Review' : 'NO GO'}
                 </button>
               ))}
             </div>
@@ -287,7 +290,7 @@ export default function LeadsPage() {
               className={activeFilterCount > 0 ? 'border-violet-400 bg-violet-50 text-violet-700' : ''}
             >
               <Filter className="w-4 h-4 mr-2" />
-              Filtros
+              Filters
               {activeFilterCount > 0 && (
                 <span className="ml-2 px-1.5 py-0.5 text-xs bg-violet-600 text-white rounded-full">
                   {activeFilterCount}
@@ -309,7 +312,7 @@ export default function LeadsPage() {
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="w-4 h-4 mr-1" />
-                Limpiar
+                Clear
               </Button>
             )}
           </div>
@@ -321,12 +324,12 @@ export default function LeadsPage() {
               disabled={filteredLeads.length === 0}
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Exportar CSV
+              Export CSV
             </Button>
             <Link href="/scorecard">
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                Nuevo Scorecard
+                New Scorecard
               </Button>
             </Link>
           </div>
@@ -340,14 +343,14 @@ export default function LeadsPage() {
                 {/* Source Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fuente
+                    Source
                   </label>
                   <select
                     value={sourceFilter}
                     onChange={(e) => setSourceFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
-                    <option value="all">Todas las fuentes</option>
+                    <option value="all">All sources</option>
                     {uniqueSources.map(source => (
                       <option key={source} value={source}>{source}</option>
                     ))}
@@ -357,7 +360,7 @@ export default function LeadsPage() {
                 {/* Score Range */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rango de Score
+                    Score Range
                   </label>
                   <div className="flex items-center gap-2">
                     <Input
@@ -385,7 +388,7 @@ export default function LeadsPage() {
                 {/* Date From */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha desde
+                    Date from
                   </label>
                   <Input
                     type="date"
@@ -397,7 +400,7 @@ export default function LeadsPage() {
                 {/* Date To */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha hasta
+                    Date to
                   </label>
                   <Input
                     type="date"
@@ -414,10 +417,10 @@ export default function LeadsPage() {
         {(search || filter !== 'all' || activeFilterCount > 0) && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="font-medium">{filteredLeads.length}</span>
-            <span>leads encontrados</span>
+            <span>leads found</span>
             {search && (
               <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs">
-                búsqueda: "{search}"
+                search: "{search}"
               </span>
             )}
             {filter !== 'all' && (
@@ -426,7 +429,7 @@ export default function LeadsPage() {
                 filter === 'review' ? 'bg-yellow-100 text-yellow-700' :
                 'bg-red-100 text-red-700'
               }`}>
-                {filter === 'go' ? 'GO' : filter === 'review' ? 'Revisar' : 'NO GO'}
+                {filter === 'go' ? 'GO' : filter === 'review' ? 'Review' : 'NO GO'}
               </span>
             )}
           </div>
@@ -439,13 +442,13 @@ export default function LeadsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <SortableHeader field="companyName">Empresa</SortableHeader>
-                    <SortableHeader field="contactName">Contacto</SortableHeader>
-                    <SortableHeader field="source">Fuente</SortableHeader>
+                    <SortableHeader field="companyName">Company</SortableHeader>
+                    <SortableHeader field="contactName">Contact</SortableHeader>
+                    <SortableHeader field="source">Source</SortableHeader>
                     <SortableHeader field="score">Score</SortableHeader>
-                    <SortableHeader field="status">Estado</SortableHeader>
-                    <SortableHeader field="createdAt">Fecha</SortableHeader>
-                    <th className="text-right py-4 px-6 text-sm font-medium text-gray-500">Acciones</th>
+                    <SortableHeader field="status">Status</SortableHeader>
+                    <SortableHeader field="createdAt">Date</SortableHeader>
+                    <th className="text-right py-4 px-6 text-sm font-medium text-gray-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -476,32 +479,32 @@ export default function LeadsPage() {
                           lead.status === 'disqualified' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {lead.status === 'qualified' ? 'Calificado' :
-                           lead.status === 'disqualified' ? 'Descalificado' : 'Pendiente'}
+                          {lead.status === 'qualified' ? 'Qualified' :
+                           lead.status === 'disqualified' ? 'Disqualified' : 'Pending'}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-gray-500 text-sm">
-                        {new Date(lead.createdAt).toLocaleDateString('es-ES')}
+                        {new Date(lead.createdAt).toLocaleDateString('en-US')}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/leads/${lead.id}`}
                             className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
-                            title="Ver detalles"
+                            title="View details"
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
                           <Link
                             href={`/leads/${lead.id}?edit=true`}
                             className="p-2 text-gray-400 hover:text-violet-600 transition-colors"
-                            title="Editar"
+                            title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </Link>
                           <button
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                            title="Eliminar"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -518,13 +521,13 @@ export default function LeadsPage() {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
                   <Search className="w-6 h-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500">No se encontraron leads con los criterios seleccionados.</p>
+                <p className="text-gray-500">No leads found matching the selected criteria.</p>
                 <Button
                   variant="ghost"
                   onClick={clearAllFilters}
                   className="mt-2 text-violet-600 hover:text-violet-700"
                 >
-                  Limpiar filtros
+                  Clear filters
                 </Button>
               </div>
             )}
@@ -535,10 +538,10 @@ export default function LeadsPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <p className="text-sm text-gray-500">
-              Mostrando {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} de {filteredLeads.length} leads
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} of {filteredLeads.length} leads
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Por página:</span>
+              <span className="text-sm text-gray-500">Per page:</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}

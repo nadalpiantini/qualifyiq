@@ -106,7 +106,7 @@ export default function FollowUpsPage() {
   const weekRange = useMemo(() => {
     const end = new Date(selectedWeekStart)
     end.setDate(end.getDate() + 6)
-    return `${selectedWeekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`
+    return `${selectedWeekStart.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`
   }, [selectedWeekStart])
 
   // Get days of the week for calendar view
@@ -156,7 +156,7 @@ export default function FollowUpsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Hoy</p>
+                  <p className="text-sm text-gray-500">Today</p>
                   <p className="text-2xl font-bold text-amber-600">{stats.dueToday}</p>
                 </div>
                 <Clock className="w-8 h-8 text-amber-500" />
@@ -168,7 +168,7 @@ export default function FollowUpsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Vencidos</p>
+                  <p className="text-sm text-gray-500">Overdue</p>
                   <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-red-500" />
@@ -180,7 +180,7 @@ export default function FollowUpsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Pendientes</p>
+                  <p className="text-sm text-gray-500">Pending</p>
                   <p className="text-2xl font-bold text-green-600">{stats.pending}</p>
                 </div>
                 <CheckCircle2 className="w-8 h-8 text-green-500" />
@@ -193,11 +193,11 @@ export default function FollowUpsPage() {
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
           <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
           {[
-            { key: 'all', label: 'Todos' },
-            { key: 'today', label: 'Hoy' },
-            { key: 'week', label: 'Esta Semana' },
-            { key: 'overdue', label: 'Vencidos' },
-            { key: 'pending', label: 'Pendientes' },
+            { key: 'all', label: 'All' },
+            { key: 'today', label: 'Today' },
+            { key: 'week', label: 'This Week' },
+            { key: 'overdue', label: 'Overdue' },
+            { key: 'pending', label: 'Pending' },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -242,7 +242,7 @@ export default function FollowUpsPage() {
                     >
                       <div className="text-center mb-2">
                         <p className="text-xs text-gray-500">
-                          {day.toLocaleDateString('es-ES', { weekday: 'short' })}
+                          {day.toLocaleDateString('en-US', { weekday: 'short' })}
                         </p>
                         <p className={`text-lg font-bold ${isToday ? 'text-violet-600' : 'text-gray-900'}`}>
                           {day.getDate()}
@@ -268,7 +268,7 @@ export default function FollowUpsPage() {
                         ))}
                         {dayFollowUps.length > 2 && (
                           <p className="text-xs text-gray-500 text-center">
-                            +{dayFollowUps.length - 2} más
+                            +{dayFollowUps.length - 2} more
                           </p>
                         )}
                       </div>
@@ -287,17 +287,17 @@ export default function FollowUpsPage() {
               <CardContent className="p-12 text-center">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No hay follow-ups
+                  No follow-ups
                 </h3>
                 <p className="text-gray-500 mb-4">
                   {filter === 'overdue'
-                    ? 'No tienes follow-ups vencidos'
+                    ? 'You have no overdue follow-ups'
                     : filter === 'today'
-                    ? 'No tienes follow-ups para hoy'
-                    : 'Agenda follow-ups desde la página de cada lead'}
+                    ? 'You have no follow-ups for today'
+                    : 'Schedule follow-ups from each lead page'}
                 </p>
                 <Link href="/leads">
-                  <Button>Ver Leads</Button>
+                  <Button>View Leads</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -324,13 +324,13 @@ export default function FollowUpsPage() {
                           followUp.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-gray-100 text-gray-700'
                         }`}>
-                          {followUp.priority === 'high' ? 'Alta' :
-                           followUp.priority === 'medium' ? 'Media' : 'Baja'}
+                          {followUp.priority === 'high' ? 'High' :
+                           followUp.priority === 'medium' ? 'Medium' : 'Low'}
                         </span>
                         {followUp.status === 'overdue' && (
                           <span className="flex items-center text-red-600 text-xs">
                             <AlertCircle className="w-3 h-3 mr-1" />
-                            Vencido
+                            Overdue
                           </span>
                         )}
                       </div>
@@ -347,7 +347,7 @@ export default function FollowUpsPage() {
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {formatFollowUpDate(followUp.dueDate)}
-                          {followUp.dueTime && ` a las ${followUp.dueTime}`}
+                          {followUp.dueTime && ` at ${followUp.dueTime}`}
                         </span>
                       </div>
 
@@ -362,7 +362,7 @@ export default function FollowUpsPage() {
                       <Link href={`/leads/${followUp.leadId}`}>
                         <Button variant="outline" size="sm">
                           <Phone className="w-4 h-4 mr-1" />
-                          Ver Lead
+                          View Lead
                         </Button>
                       </Link>
 
@@ -372,7 +372,7 @@ export default function FollowUpsPage() {
                           size="sm"
                           className="text-xs px-2"
                           onClick={() => window.open(generateGoogleCalendarUrl(followUp), '_blank')}
-                          title="Añadir a Google Calendar"
+                          title="Add to Google Calendar"
                         >
                           <ExternalLink className="w-3 h-3" />
                         </Button>
@@ -381,7 +381,7 @@ export default function FollowUpsPage() {
                           size="sm"
                           className="text-xs px-2"
                           onClick={() => window.open(generateOutlookCalendarUrl(followUp), '_blank')}
-                          title="Añadir a Outlook"
+                          title="Add to Outlook"
                         >
                           <Calendar className="w-3 h-3" />
                         </Button>
@@ -390,7 +390,7 @@ export default function FollowUpsPage() {
                           size="sm"
                           className="text-xs px-2"
                           onClick={() => downloadICalEvent(followUp)}
-                          title="Descargar .ics"
+                          title="Download .ics"
                         >
                           <Download className="w-3 h-3" />
                         </Button>

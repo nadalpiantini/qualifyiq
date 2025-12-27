@@ -76,12 +76,12 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                 <Target className="w-10 h-10 text-violet-600" />
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                ¡Bienvenido a QualifyIQ!
+                Welcome to QualifyIQ!
               </h2>
               <p className="text-lg text-gray-600 mb-8">
-                Te ayudaremos a calificar leads en menos de 2 minutos usando el método BANT.
+                We will help you qualify leads in less than 2 minutes using the BANT method.
                 <br />
-                <span className="text-violet-600 font-medium">Di "no" con confianza. Di "sí" con certeza.</span>
+                <span className="text-violet-600 font-medium">Say "no" with confidence. Say "yes" with certainty.</span>
               </p>
 
               {/* Quick stats preview */}
@@ -113,8 +113,8 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                   <Sparkles className="w-6 h-6 text-violet-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">¿Qué es BANT?</h2>
-                  <p className="text-gray-500">El framework que usan los mejores equipos de ventas</p>
+                  <h2 className="text-2xl font-bold text-gray-900">What is BANT?</h2>
+                  <p className="text-gray-500">The framework used by the best sales teams</p>
                 </div>
               </div>
 
@@ -126,10 +126,10 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Budget</p>
-                      <p className="text-xs text-gray-500">Presupuesto</p>
+                      <p className="text-xs text-gray-500">Available funds</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">¿Tienen dinero para comprar?</p>
+                  <p className="text-sm text-gray-600">Do they have money to buy?</p>
                 </div>
 
                 <div className="p-4 border border-gray-200 rounded-xl hover:border-violet-200 transition-colors">
@@ -139,10 +139,10 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Authority</p>
-                      <p className="text-xs text-gray-500">Autoridad</p>
+                      <p className="text-xs text-gray-500">Decision power</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">¿Pueden tomar la decisión?</p>
+                  <p className="text-sm text-gray-600">Can they make the decision?</p>
                 </div>
 
                 <div className="p-4 border border-gray-200 rounded-xl hover:border-violet-200 transition-colors">
@@ -152,10 +152,10 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Need</p>
-                      <p className="text-xs text-gray-500">Necesidad</p>
+                      <p className="text-xs text-gray-500">Real problem</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">¿Tienen un problema real?</p>
+                  <p className="text-sm text-gray-600">Do they have a real problem?</p>
                 </div>
 
                 <div className="p-4 border border-gray-200 rounded-xl hover:border-violet-200 transition-colors">
@@ -165,17 +165,17 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Timeline</p>
-                      <p className="text-xs text-gray-500">Tiempo</p>
+                      <p className="text-xs text-gray-500">Time frame</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">¿Cuándo necesitan solucionarlo?</p>
+                  <p className="text-sm text-gray-600">When do they need to solve it?</p>
                 </div>
               </div>
 
               <div className="p-4 bg-violet-50 rounded-xl">
                 <p className="text-sm text-violet-700">
-                  <strong>💡 Tip:</strong> También evaluamos <strong>Technical Fit</strong> (Ajuste Técnico) -
-                  ¿Podemos realmente resolver su problema con nuestra solución?
+                  <strong>💡 Tip:</strong> We also evaluate <strong>Technical Fit</strong> -
+                  Can we really solve their problem with our solution?
                 </p>
               </div>
             </div>
@@ -189,8 +189,8 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                   <Target className="w-6 h-6 text-violet-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">¿Cómo empezar?</h2>
-                  <p className="text-gray-500">3 pasos simples</p>
+                  <h2 className="text-2xl font-bold text-gray-900">How to get started?</h2>
+                  <p className="text-gray-500">3 simple steps</p>
                 </div>
               </div>
 
@@ -200,9 +200,9 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     1
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Crea un Scorecard</p>
+                    <p className="font-semibold text-gray-900">Create a Scorecard</p>
                     <p className="text-sm text-gray-600">
-                      Después de hablar con un lead, ve a "Scorecard" y llena la información básica.
+                      After talking with a lead, go to "Scorecard" and fill in the basic information.
                     </p>
                   </div>
                 </div>
@@ -212,9 +212,9 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     2
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Califica con BANT</p>
+                    <p className="font-semibold text-gray-900">Score with BANT</p>
                     <p className="text-sm text-gray-600">
-                      Asigna scores de 1-5 en cada categoría. Las etiquetas te guían.
+                      Assign scores from 1-5 in each category. The labels guide you.
                     </p>
                   </div>
                 </div>
@@ -224,9 +224,9 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
                     3
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Obtén la recomendación</p>
+                    <p className="font-semibold text-gray-900">Get the recommendation</p>
                     <p className="text-sm text-gray-600">
-                      QualifyIQ calcula el score y te dice: GO, REVIEW, o NO GO.
+                      QualifyIQ calculates the score and tells you: GO, REVIEW, or NO GO.
                     </p>
                   </div>
                 </div>
@@ -234,7 +234,7 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
               <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
                 <p className="text-sm text-green-700 text-center">
-                  <strong>✨ ¡Listo!</strong> Ahora estás preparado para calificar leads como un profesional.
+                  <strong>✨ Done!</strong> You are now ready to qualify leads like a professional.
                 </p>
               </div>
             </div>
@@ -261,17 +261,17 @@ export function WelcomeModal({ onComplete }: WelcomeModalProps) {
               onClick={handleSkip}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Saltar intro
+              Skip intro
             </button>
             <Button onClick={handleNext} size="lg">
               {currentStep < 2 ? (
                 <>
-                  Siguiente
+                  Next
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </>
               ) : (
                 <>
-                  ¡Empezar!
+                  Get Started!
                   <Sparkles className="ml-2 w-4 h-4" />
                 </>
               )}

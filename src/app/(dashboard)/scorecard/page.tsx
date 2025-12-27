@@ -12,16 +12,18 @@ import { ScoreSlider } from '@/components/ui/score-slider'
 import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Save, Loader2, Info, HelpCircle } from 'lucide-react'
 import { Tooltip, InfoTooltip } from '@/components/ui/tooltip'
 import { saveScorecard } from '@/app/actions/scorecard'
+import { CompanyIntelligence } from '@/components/ai/CompanyIntelligence'
+import type { AICompanyAnalysis } from '@/types/database'
 
 const RED_FLAGS = [
-  { id: 'unrealistic_timeline', label: 'Expectativas de timeline poco realistas' },
-  { id: 'budget_unclear', label: 'Presupuesto no definido o poco claro' },
-  { id: 'multiple_decision_makers', label: 'Demasiados tomadores de decisión' },
-  { id: 'scope_creep_history', label: 'Historial de cambios de alcance' },
-  { id: 'poor_communication', label: 'Comunicación deficiente en contacto inicial' },
-  { id: 'unrealistic_expectations', label: 'Expectativas de resultados poco realistas' },
-  { id: 'price_focused', label: 'Enfocado principalmente en precio' },
-  { id: 'previous_vendor_issues', label: 'Problemas con proveedores anteriores' },
+  { id: 'unrealistic_timeline', label: 'Unrealistic timeline expectations' },
+  { id: 'budget_unclear', label: 'Undefined or unclear budget' },
+  { id: 'multiple_decision_makers', label: 'Too many decision makers' },
+  { id: 'scope_creep_history', label: 'History of scope creep' },
+  { id: 'poor_communication', label: 'Poor initial contact communication' },
+  { id: 'unrealistic_expectations', label: 'Unrealistic outcome expectations' },
+  { id: 'price_focused', label: 'Primarily price-focused' },
+  { id: 'previous_vendor_issues', label: 'Issues with previous vendors' },
 ]
 
 export default function ScorecardPage() {
@@ -51,6 +53,18 @@ export default function ScorecardPage() {
   })
   const [redFlags, setRedFlags] = useState<string[]>([])
   const [redFlagNotes, setRedFlagNotes] = useState('')
+  const [aiAnalysis, setAiAnalysis] = useState<AICompanyAnalysis | null>(null)
+
+  // Handle AI BANT suggestions
+  const handleApplyAISuggestions = (suggestions: AICompanyAnalysis['suggestedBANT']) => {
+    setScores(prev => ({
+      budget: suggestions.budget ?? prev.budget,
+      authority: suggestions.authority ?? prev.authority,
+      need: suggestions.need ?? prev.need,
+      timeline: suggestions.timeline ?? prev.timeline,
+      technicalFit: suggestions.technicalFit ?? prev.technicalFit,
+    }))
+  }
 
   // Calculate total score (weighted) - weights MUST sum to 1.0
   const calculateScore = () => {
@@ -77,9 +91,9 @@ export default function ScorecardPage() {
   const totalScore = calculateScore()
 
   const getRecommendation = (score: number) => {
-    if (score >= 70) return { label: 'GO', color: 'green', icon: CheckCircle2, description: 'Proceder con confianza' }
-    if (score >= 50) return { label: 'REVIEW', color: 'yellow', icon: AlertTriangle, description: 'Requiere más evaluación' }
-    return { label: 'NO GO', color: 'red', icon: XCircle, description: 'Declinar o negociar' }
+    if (score >= 70) return { label: 'GO', color: 'green', icon: CheckCircle2, description: 'Proceed with confidence' }
+    if (score >= 50) return { label: 'REVIEW', color: 'yellow', icon: AlertTriangle, description: 'Requires more evaluation' }
+    return { label: 'NO GO', color: 'red', icon: XCircle, description: 'Decline or negotiate' }
   }
 
   const recommendation = getRecommendation(totalScore)
@@ -107,14 +121,14 @@ export default function ScorecardPage() {
       })
 
       if (result.success) {
-        toast.success('¡Scorecard guardado!', {
-          description: `${leadInfo.companyName || 'Lead'} calificado con recomendación ${recommendation.label}.`,
+        toast.success('Scorecard saved!', {
+          description: `${leadInfo.companyName || 'Lead'} qualified with ${recommendation.label} recommendation.`,
         })
         router.push(`/leads?created=${result.leadId}`)
       } else {
-        const errorMsg = result.error || 'Error al guardar scorecard'
+        const errorMsg = result.error || 'Error saving scorecard'
         setError(errorMsg)
-        toast.error('Error al guardar', {
+        toast.error('Error saving', {
           description: errorMsg,
         })
       }
@@ -126,8 +140,8 @@ export default function ScorecardPage() {
   return (
     <div className="min-h-screen">
       <Header
-        title="Nuevo Scorecard"
-        subtitle="Califica tu lead con el método BANT en 2 minutos"
+        title="New Scorecard"
+        subtitle="Qualify your lead using the BANT method in 2 minutes"
       />
 
       <div className="p-6">
@@ -147,7 +161,7 @@ export default function ScorecardPage() {
                     {s}
                   </div>
                   <span className={`text-xs mt-1 ${step >= s ? 'text-violet-600 font-medium' : 'text-gray-500'}`}>
-                    {s === 1 ? 'Info del Lead' : 'Calificación BANT'}
+                    {s === 1 ? 'Lead Info' : 'BANT Scoring'}
                   </span>
                 </div>
                 {s < 2 && (
@@ -165,40 +179,48 @@ export default function ScorecardPage() {
           {step === 1 && (
             <Card data-tour="lead-info">
               <CardHeader>
-                <CardTitle>Información del Lead</CardTitle>
+                <CardTitle>Lead Information</CardTitle>
                 <CardDescription>
-                  Datos básicos del prospecto que estás calificando
+                  Basic data about the prospect you are qualifying
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div>
+                  <Input
+                    label="Company Name *"
+                    value={leadInfo.companyName}
+                    onChange={(e) => setLeadInfo({ ...leadInfo, companyName: e.target.value })}
+                    placeholder="e.g. TechCorp Inc."
+                  />
+                  {/* AI Company Intelligence */}
+                  <CompanyIntelligence
+                    companyName={leadInfo.companyName}
+                    onApplySuggestions={handleApplyAISuggestions}
+                    language="es"
+                  />
+                </div>
                 <Input
-                  label="Nombre de la Empresa *"
-                  value={leadInfo.companyName}
-                  onChange={(e) => setLeadInfo({ ...leadInfo, companyName: e.target.value })}
-                  placeholder="ej. TechCorp Inc."
-                />
-                <Input
-                  label="Nombre del Contacto"
+                  label="Contact Name"
                   value={leadInfo.contactName}
                   onChange={(e) => setLeadInfo({ ...leadInfo, contactName: e.target.value })}
-                  placeholder="ej. Juan Pérez"
+                  placeholder="e.g. John Smith"
                 />
                 <Input
-                  label="Email del Contacto"
+                  label="Contact Email"
                   type="email"
                   value={leadInfo.contactEmail}
                   onChange={(e) => setLeadInfo({ ...leadInfo, contactEmail: e.target.value })}
-                  placeholder="ej. juan@techcorp.com"
+                  placeholder="e.g. john@techcorp.com"
                 />
                 <Input
-                  label="Fuente del Lead"
+                  label="Lead Source"
                   value={leadInfo.source}
                   onChange={(e) => setLeadInfo({ ...leadInfo, source: e.target.value })}
-                  placeholder="ej. LinkedIn, Referido, Web"
+                  placeholder="e.g. LinkedIn, Referral, Website"
                 />
                 <div className="flex justify-end pt-4">
                   <Button onClick={() => setStep(2)} disabled={!canProceed}>
-                    Continuar a Calificación <ArrowRight className="ml-2 w-4 h-4" />
+                    Continue to Scoring <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -214,96 +236,96 @@ export default function ScorecardPage() {
                 <Card data-tour="bant-section">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
-                      Calificación BANT
+                      BANT Scoring
                       <span className="text-sm font-normal text-gray-500">(Budget, Authority, Need, Timeline)</span>
                       <Tooltip
-                        content="BANT es un método de calificación de ventas que evalúa: Presupuesto, Autoridad para decidir, Necesidad real y Timeline de compra."
+                        content="BANT is a sales qualification method that evaluates: Budget availability, Authority to decide, real Need, and purchase Timeline."
                         position="right"
                       >
                         <HelpCircle className="w-4 h-4 text-gray-400 hover:text-violet-600 cursor-help" />
                       </Tooltip>
                     </CardTitle>
                     <CardDescription>
-                      Asigna un puntaje de 1-5 en cada categoría. Las etiquetas te ayudan a decidir.
+                      Assign a score of 1-5 in each category. The labels help you decide.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
                       <ScoreSlider
-                        label="💰 Budget (Presupuesto)"
+                        label="💰 Budget"
                         value={scores.budget}
                         onChange={(v) => setScores({ ...scores, budget: v })}
-                        description="¿Tienen presupuesto asignado para esta solución?"
+                        description="Do they have budget allocated for this solution?"
                         labels={[
-                          '1 - Sin presupuesto',
-                          '2 - Explorando',
-                          '3 - Presupuesto tentativo',
-                          '4 - Aprobado internamente',
-                          '5 - Listos para invertir'
+                          '1 - No budget',
+                          '2 - Exploring',
+                          '3 - Tentative budget',
+                          '4 - Internally approved',
+                          '5 - Ready to invest'
                         ]}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <ScoreSlider
-                        label="👤 Authority (Autoridad)"
+                        label="👤 Authority"
                         value={scores.authority}
                         onChange={(v) => setScores({ ...scores, authority: v })}
-                        description="¿Estás hablando con quien toma la decisión?"
+                        description="Are you speaking with the decision-maker?"
                         labels={[
-                          '1 - Sin acceso',
-                          '2 - Influenciador',
-                          '3 - Recomienda',
-                          '4 - Co-decide',
-                          '5 - Decisor final'
+                          '1 - No access',
+                          '2 - Influencer',
+                          '3 - Recommender',
+                          '4 - Co-decider',
+                          '5 - Final decider'
                         ]}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <ScoreSlider
-                        label="🎯 Need (Necesidad)"
+                        label="🎯 Need"
                         value={scores.need}
                         onChange={(v) => setScores({ ...scores, need: v })}
-                        description="¿Qué tan urgente y real es su necesidad?"
+                        description="How urgent and real is their need?"
                         labels={[
-                          '1 - Sin necesidad',
+                          '1 - No need',
                           '2 - Nice to have',
-                          '3 - Importante',
-                          '4 - Urgente',
-                          '5 - Crítico'
+                          '3 - Important',
+                          '4 - Urgent',
+                          '5 - Critical'
                         ]}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <ScoreSlider
-                        label="⏰ Timeline (Tiempo)"
+                        label="⏰ Timeline"
                         value={scores.timeline}
                         onChange={(v) => setScores({ ...scores, timeline: v })}
-                        description="¿Cuándo necesitan una solución?"
+                        description="When do they need a solution?"
                         labels={[
-                          '1 - Sin timeline',
-                          '2 - 12+ meses',
-                          '3 - 6-12 meses',
-                          '4 - 3-6 meses',
-                          '5 - Inmediato'
+                          '1 - No timeline',
+                          '2 - 12+ months',
+                          '3 - 6-12 months',
+                          '4 - 3-6 months',
+                          '5 - Immediate'
                         ]}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <ScoreSlider
-                        label="🔧 Technical Fit (Ajuste Técnico)"
+                        label="🔧 Technical Fit"
                         value={scores.technicalFit}
                         onChange={(v) => setScores({ ...scores, technicalFit: v })}
-                        description="¿Podemos resolver su problema con nuestra solución?"
+                        description="Can we solve their problem with our solution?"
                         labels={[
-                          '1 - No podemos',
-                          '2 - Brechas grandes',
-                          '3 - Ajuste parcial',
-                          '4 - Buen ajuste',
-                          '5 - Ajuste perfecto'
+                          '1 - Cannot solve',
+                          '2 - Major gaps',
+                          '3 - Partial fit',
+                          '4 - Good fit',
+                          '5 - Perfect fit'
                         ]}
                       />
                     </div>
@@ -315,16 +337,16 @@ export default function ScorecardPage() {
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
                       🚩 Red Flags
-                      <span className="text-sm font-normal text-gray-500">(-5 puntos cada una)</span>
+                      <span className="text-sm font-normal text-gray-500">(-5 points each)</span>
                       <Tooltip
-                        content="Las red flags son señales de alerta que indican posibles problemas con el lead. Cada una resta 5 puntos del score final."
+                        content="Red flags are warning signs that indicate potential problems with the lead. Each one deducts 5 points from the final score."
                         position="right"
                       >
                         <HelpCircle className="w-4 h-4 text-gray-400 hover:text-violet-600 cursor-help" />
                       </Tooltip>
                     </CardTitle>
                     <CardDescription>
-                      Selecciona las señales de alerta que detectaste. Cada una reduce el score final.
+                      Select the warning signs you detected. Each one reduces the final score.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -345,7 +367,7 @@ export default function ScorecardPage() {
                       ))}
                     </div>
                     <Textarea
-                      placeholder="Notas adicionales sobre red flags..."
+                      placeholder="Additional notes about red flags..."
                       value={redFlagNotes}
                       onChange={(e) => setRedFlagNotes(e.target.value)}
                       className="mt-2"
@@ -357,18 +379,18 @@ export default function ScorecardPage() {
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setStep(1)}>
                     <ArrowLeft className="mr-2 w-4 h-4" />
-                    Volver
+                    Back
                   </Button>
                   <Button onClick={handleSubmit} disabled={isPending}>
                     {isPending ? (
                       <>
                         <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                        Guardando...
+                        Saving...
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 w-4 h-4" />
-                        Guardar Scorecard
+                        Save Scorecard
                       </>
                     )}
                   </Button>
@@ -385,9 +407,9 @@ export default function ScorecardPage() {
                   }`}>
                     <CardContent className="p-6 text-center">
                       <div className="text-sm text-gray-500 mb-2 flex items-center justify-center gap-1">
-                        Score en tiempo real
+                        Real-time Score
                         <Tooltip
-                          content="El score se calcula automáticamente según tus respuestas. GO (≥70): Proceder. REVIEW (50-69): Evaluar más. NO GO (<50): Declinar."
+                          content="Score is calculated automatically based on your answers. GO (≥70): Proceed. REVIEW (50-69): Evaluate more. NO GO (<50): Decline."
                           position="left"
                         >
                           <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600 cursor-help" />
@@ -429,7 +451,7 @@ export default function ScorecardPage() {
                     <CardContent className="p-4">
                       <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-1">
                         <Info className="w-4 h-4" />
-                        Desglose del Score
+                        Score Breakdown
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -469,12 +491,12 @@ export default function ScorecardPage() {
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-sm font-medium text-gray-700 mb-2">Lead</div>
-                      <p className="font-semibold text-gray-900">{leadInfo.companyName || 'Sin nombre'}</p>
+                      <p className="font-semibold text-gray-900">{leadInfo.companyName || 'No name'}</p>
                       {leadInfo.contactName && (
                         <p className="text-sm text-gray-500">{leadInfo.contactName}</p>
                       )}
                       {leadInfo.source && (
-                        <p className="text-xs text-gray-400 mt-1">Fuente: {leadInfo.source}</p>
+                        <p className="text-xs text-gray-400 mt-1">Source: {leadInfo.source}</p>
                       )}
                     </CardContent>
                   </Card>

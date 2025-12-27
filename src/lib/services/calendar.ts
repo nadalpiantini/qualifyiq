@@ -113,13 +113,13 @@ export function formatFollowUpDate(dateStr: string): string {
   date.setHours(0, 0, 0, 0)
 
   if (date.getTime() === today.getTime()) {
-    return 'Hoy'
+    return 'Today'
   }
   if (date.getTime() === tomorrow.getTime()) {
-    return 'Mañana'
+    return 'Tomorrow'
   }
 
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('en-US', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -230,7 +230,7 @@ export function generateICalEvent(followUp: FollowUp): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//QualifyIQ//Follow-up Calendar//ES',
+    'PRODID:-//QualifyIQ//Follow-up Calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

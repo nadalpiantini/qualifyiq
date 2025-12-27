@@ -26,13 +26,25 @@ import { Tooltip, InfoTooltip } from '@/components/ui/tooltip'
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<typeof DEMO_LEADS>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get leads from demo mode or real data
-    if (isDemoMode()) {
-      setLeads(DEMO_LEADS)
+    // Load data - always use demo data when in demo mode or when real data isn't available
+    async function loadData() {
+      setIsLoading(true)
+
+      // Always load demo data for now (demo mode is the default experience)
+      // In production with real Supabase connection, we would:
+      // 1. Try to fetch real data
+      // 2. Fall back to demo data if in demo mode
+      if (isDemoMode() || DEMO_LEADS.length > 0) {
+        setLeads(DEMO_LEADS)
+      }
+
+      setIsLoading(false)
     }
-    // In production, would fetch from Supabase
+
+    loadData()
   }, [])
 
   // Calculate real metrics from leads
@@ -103,7 +115,7 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: Users,
       color: 'violet',
-      tooltip: 'Número total de leads que has evaluado con el scorecard BANT',
+      tooltip: 'Total number of leads you have evaluated with the BANT scorecard',
     },
     {
       title: 'Qualified (GO)',
@@ -112,7 +124,7 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: CheckCircle2,
       color: 'green',
-      tooltip: 'Leads con score ≥70. Alta probabilidad de éxito, proceder con la venta',
+      tooltip: 'Leads with score ≥70. High success probability, proceed with sale',
     },
     {
       title: 'Disqualified (NO GO)',
@@ -121,7 +133,7 @@ export default function DashboardPage() {
       changeType: 'negative' as const,
       icon: XCircle,
       color: 'red',
-      tooltip: 'Leads con score <50. No cumplen criterios mínimos, declinar cortésmente',
+      tooltip: 'Leads with score <50. Do not meet minimum criteria, politely decline',
     },
     {
       title: 'Avg. Score',
@@ -130,9 +142,98 @@ export default function DashboardPage() {
       changeType: 'positive' as const,
       icon: TrendingUp,
       color: 'violet',
-      tooltip: 'Promedio de scores BANT. Valores altos indican mejor calidad de pipeline',
+      tooltip: 'Average BANT scores. Higher values indicate better pipeline quality',
     },
   ]
+
+  // Show loading skeleton while data loads
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Header
+          title="Dashboard"
+          subtitle="Loading your metrics..."
+        />
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state when no leads exist
+  if (leads.length === 0) {
+    return (
+      <div className="min-h-screen">
+        <Header
+          title="Dashboard"
+          subtitle="Welcome to QualifyIQ"
+        />
+        <div className="p-6">
+          <Card className="border-dashed border-2 border-gray-200">
+            <CardContent className="py-16 px-8 text-center">
+              <div className="mx-auto w-20 h-20 bg-violet-100 rounded-full flex items-center justify-center mb-6">
+                <Target className="w-10 h-10 text-violet-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Start Qualifying Your Leads
+              </h2>
+              <p className="text-gray-500 max-w-md mx-auto mb-8">
+                Use the BANT methodology to score your leads and identify which opportunities
+                are worth pursuing. Create your first scorecard to get started.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/scorecard">
+                  <Button size="lg" className="gap-2">
+                    <Target className="w-5 h-5" />
+                    Create First Scorecard
+                  </Button>
+                </Link>
+                <Link href="/leads">
+                  <Button size="lg" variant="outline" className="gap-2">
+                    <Users className="w-5 h-5" />
+                    View Leads
+                  </Button>
+                </Link>
+              </div>
+              <div className="mt-10 pt-8 border-t border-gray-100">
+                <p className="text-sm text-gray-400 mb-4">What is BANT?</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-semibold text-violet-600">B</p>
+                    <p className="text-xs text-gray-500">Budget</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-semibold text-violet-600">A</p>
+                    <p className="text-xs text-gray-500">Authority</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-semibold text-violet-600">N</p>
+                    <p className="text-xs text-gray-500">Need</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-semibold text-violet-600">T</p>
+                    <p className="text-xs text-gray-500">Timeline</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">

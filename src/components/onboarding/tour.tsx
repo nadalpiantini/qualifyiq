@@ -162,7 +162,7 @@ export function Tour({ tourId, steps, onComplete, autoStart = true }: TourProps)
 
         <CardContent className="p-5">
           <div className="mb-1 text-xs text-violet-600 font-medium">
-            Paso {currentStep + 1} de {steps.length}
+            Step {currentStep + 1} of {steps.length}
           </div>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -195,24 +195,24 @@ export function Tour({ tourId, steps, onComplete, autoStart = true }: TourProps)
               onClick={handleSkip}
               className="text-xs text-gray-500 hover:text-gray-700"
             >
-              Saltar tour
+              Skip tour
             </button>
 
             <div className="flex gap-2">
               {currentStep > 0 && (
                 <Button variant="outline" size="sm" onClick={handlePrev}>
                   <ChevronLeft className="w-4 h-4 mr-1" />
-                  Anterior
+                  Previous
                 </Button>
               )}
               <Button size="sm" onClick={handleNext}>
                 {currentStep < steps.length - 1 ? (
                   <>
-                    Siguiente
+                    Next
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </>
                 ) : (
-                  '¡Entendido!'
+                  'Got it!'
                 )}
               </Button>
             </div>

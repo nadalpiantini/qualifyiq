@@ -427,11 +427,11 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 {/* BANT Weight inputs */}
                 {[
-                  { label: 'Budget Weight', key: 'budget' as const, tooltip: 'Importancia del presupuesto disponible. Mayor peso = más impacto en el score final.' },
-                  { label: 'Authority Weight', key: 'authority' as const, tooltip: 'Importancia de hablar con el decisor. Mayor peso = más relevante la autoridad de compra.' },
-                  { label: 'Need Weight', key: 'need' as const, tooltip: 'Importancia de la necesidad real. Mayor peso = más crítico que exista una necesidad clara.' },
-                  { label: 'Timeline Weight', key: 'timeline' as const, tooltip: 'Importancia del timing. Mayor peso = más urgente que tengan fecha de decisión.' },
-                  { label: 'Technical Fit Weight', key: 'technicalFit' as const, tooltip: 'Importancia del ajuste técnico. Mayor peso = más crítico que podamos resolver su problema.' },
+                  { label: 'Budget Weight', key: 'budget' as const, tooltip: 'Importance of available budget. Higher weight = more impact on final score.' },
+                  { label: 'Authority Weight', key: 'authority' as const, tooltip: 'Importance of speaking with decision-maker. Higher weight = more relevant the purchasing authority.' },
+                  { label: 'Need Weight', key: 'need' as const, tooltip: 'Importance of real need. Higher weight = more critical that a clear need exists.' },
+                  { label: 'Timeline Weight', key: 'timeline' as const, tooltip: 'Importance of timing. Higher weight = more urgent they have a decision date.' },
+                  { label: 'Technical Fit Weight', key: 'technicalFit' as const, tooltip: 'Importance of technical fit. Higher weight = more critical we can solve their problem.' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div className="flex items-center gap-1">

@@ -131,11 +131,13 @@ export default function LeadDetailPage() {
     async function loadLead() {
       setLoading(true)
 
-      // Check if demo mode
-      if (isDemoMode()) {
-        const demoLead = DEMO_LEADS.find(l => l.id === leadId)
-        const demoScorecard = DEMO_SCORECARDS.find(s => s.leadId === leadId)
+      // First, try to find in demo data (works regardless of cookie for demo IDs)
+      const isDemoId = leadId.startsWith('demo-lead-')
+      const demoLead = DEMO_LEADS.find(l => l.id === leadId)
+      const demoScorecard = DEMO_SCORECARDS.find(s => s.leadId === leadId)
 
+      // Use demo data if: demo mode is active OR if the ID is a demo ID with matching data
+      if (isDemoMode() || (isDemoId && demoLead)) {
         if (demoLead) {
           setLead(demoLead)
           if (demoScorecard) {
@@ -156,9 +158,13 @@ export default function LeadDetailPage() {
             })
             setSelectedRedFlags(demoScorecard.redFlags || [])
           }
+          setLoading(false)
+          return
         }
-      } else {
-        // Real data from server action
+      }
+
+      // Real data from server action (only for non-demo IDs)
+      if (!isDemoId) {
         const result = await getLead(leadId)
         if (result.success && result.lead) {
           setLead(result.lead as typeof DEMO_LEADS[0])
@@ -359,7 +365,7 @@ export default function LeadDetailPage() {
       <div className="min-h-screen">
         <Header title="Lead Not Found" subtitle="" />
         <div className="p-6 text-center">
-          <p className="text-gray-500 mb-4">The lead you're looking for doesn't exist.</p>
+          <p className="text-gray-500 mb-4">The lead you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/leads">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -562,13 +568,13 @@ export default function LeadDetailPage() {
                       {getDaysUntil(currentFollowUp.dueDate) <= 1 && getDaysUntil(currentFollowUp.dueDate) >= 0 && (
                         <span className="flex items-center text-amber-600">
                           <AlertCircle className="w-3 h-3 mr-1" />
-                          {getDaysUntil(currentFollowUp.dueDate) === 0 ? '¡Hoy!' : 'Mañana'}
+                          {getDaysUntil(currentFollowUp.dueDate) === 0 ? 'Today!' : 'Tomorrow'}
                         </span>
                       )}
                       {getDaysUntil(currentFollowUp.dueDate) < 0 && (
                         <span className="flex items-center text-red-600">
                           <AlertCircle className="w-3 h-3 mr-1" />
-                          Vencido
+                          Overdue
                         </span>
                       )}
                     </div>
@@ -651,8 +657,8 @@ export default function LeadDetailPage() {
                               : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          {priority === 'high' ? '🔥 Alta' :
-                           priority === 'medium' ? '⚡ Media' : '📌 Baja'}
+                          {priority === 'high' ? '🔥 High' :
+                           priority === 'medium' ? '⚡ Medium' : '📌 Low'}
                         </button>
                       ))}
                     </div>

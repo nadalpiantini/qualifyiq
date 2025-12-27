@@ -266,7 +266,7 @@ export function FeatureHighlight({
             {step && totalSteps && (
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
-                  Paso {step} de {totalSteps}
+                  Step {step} of {totalSteps}
                 </span>
               </div>
             )}
@@ -280,7 +280,7 @@ export function FeatureHighlight({
                   onClick={onDismiss}
                   className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
                 >
-                  Cerrar
+                  Close
                 </button>
               )}
               {onNext && (
@@ -288,7 +288,7 @@ export function FeatureHighlight({
                   onClick={onNext}
                   className="text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded-lg"
                 >
-                  Siguiente
+                  Next
                 </button>
               )}
             </div>
