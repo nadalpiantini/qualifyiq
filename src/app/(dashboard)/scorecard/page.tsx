@@ -9,18 +9,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ScoreSlider } from '@/components/ui/score-slider'
-import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, Save, Loader2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Save, Loader2, Info } from 'lucide-react'
 import { saveScorecard } from '@/app/actions/scorecard'
 
 const RED_FLAGS = [
-  { id: 'unrealistic_timeline', label: 'Unrealistic timeline expectations' },
-  { id: 'budget_unclear', label: 'Budget unclear or undefined' },
-  { id: 'multiple_decision_makers', label: 'Too many decision makers' },
-  { id: 'scope_creep_history', label: 'History of scope creep' },
-  { id: 'poor_communication', label: 'Poor communication in initial contact' },
-  { id: 'unrealistic_expectations', label: 'Unrealistic outcome expectations' },
-  { id: 'price_focused', label: 'Primarily price-focused' },
-  { id: 'previous_vendor_issues', label: 'Issues with previous vendors' },
+  { id: 'unrealistic_timeline', label: 'Expectativas de timeline poco realistas' },
+  { id: 'budget_unclear', label: 'Presupuesto no definido o poco claro' },
+  { id: 'multiple_decision_makers', label: 'Demasiados tomadores de decisión' },
+  { id: 'scope_creep_history', label: 'Historial de cambios de alcance' },
+  { id: 'poor_communication', label: 'Comunicación deficiente en contacto inicial' },
+  { id: 'unrealistic_expectations', label: 'Expectativas de resultados poco realistas' },
+  { id: 'price_focused', label: 'Enfocado principalmente en precio' },
+  { id: 'previous_vendor_issues', label: 'Problemas con proveedores anteriores' },
 ]
 
 export default function ScorecardPage() {
@@ -54,12 +54,12 @@ export default function ScorecardPage() {
   // Calculate total score (weighted) - weights MUST sum to 1.0
   const calculateScore = () => {
     const weights = {
-      budget: 0.20,      // 20% - Financial readiness
-      authority: 0.20,   // 20% - Decision maker access (was 15%)
-      need: 0.25,        // 25% - Problem urgency (highest weight)
-      timeline: 0.15,    // 15% - Implementation timeline
-      technicalFit: 0.20, // 20% - Solution compatibility (was 15%)
-    } // Total: 100%
+      budget: 0.20,
+      authority: 0.20,
+      need: 0.25,
+      timeline: 0.15,
+      technicalFit: 0.20,
+    }
 
     const baseScore = (
       scores.budget * weights.budget +
@@ -67,9 +67,8 @@ export default function ScorecardPage() {
       scores.need * weights.need +
       scores.timeline * weights.timeline +
       scores.technicalFit * weights.technicalFit
-    ) * 20 // Convert 1-5 scale to 0-100
+    ) * 20
 
-    // Reduce score based on red flags
     const redFlagPenalty = redFlags.length * 5
     return Math.max(0, Math.round(baseScore - redFlagPenalty))
   }
@@ -77,9 +76,9 @@ export default function ScorecardPage() {
   const totalScore = calculateScore()
 
   const getRecommendation = (score: number) => {
-    if (score >= 70) return { label: 'GO', color: 'green', icon: CheckCircle2 }
-    if (score >= 50) return { label: 'REVIEW', color: 'yellow', icon: AlertTriangle }
-    return { label: 'NO GO', color: 'red', icon: XCircle }
+    if (score >= 70) return { label: 'GO', color: 'green', icon: CheckCircle2, description: 'Proceder con confianza' }
+    if (score >= 50) return { label: 'REVIEW', color: 'yellow', icon: AlertTriangle, description: 'Requiere más evaluación' }
+    return { label: 'NO GO', color: 'red', icon: XCircle, description: 'Declinar o negociar' }
   }
 
   const recommendation = getRecommendation(totalScore)
@@ -107,45 +106,52 @@ export default function ScorecardPage() {
       })
 
       if (result.success) {
-        toast.success('Scorecard saved!', {
-          description: `${leadInfo.companyName || 'Lead'} has been qualified with a ${recommendation.label} recommendation.`,
+        toast.success('¡Scorecard guardado!', {
+          description: `${leadInfo.companyName || 'Lead'} calificado con recomendación ${recommendation.label}.`,
         })
         router.push(`/leads?created=${result.leadId}`)
       } else {
-        const errorMsg = result.error || 'Failed to save scorecard'
+        const errorMsg = result.error || 'Error al guardar scorecard'
         setError(errorMsg)
-        toast.error('Failed to save scorecard', {
+        toast.error('Error al guardar', {
           description: errorMsg,
         })
       }
     })
   }
 
+  const canProceed = leadInfo.companyName.trim() !== ''
+
   return (
     <div className="min-h-screen">
       <Header
-        title="New Scorecard"
-        subtitle="Qualify your lead with structured assessment"
+        title="Nuevo Scorecard"
+        subtitle="Califica tu lead con el método BANT en 2 minutos"
       />
 
       <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Progress Steps */}
+        <div className="max-w-5xl mx-auto">
+          {/* Progress Steps - Now just 2 steps */}
           <div className="flex items-center justify-center mb-8">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2].map((s) => (
               <div key={s} className="flex items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    step >= s
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-gray-200 text-gray-500'
-                  }`}
-                >
-                  {s}
-                </div>
-                {s < 4 && (
+                <div className="flex flex-col items-center">
                   <div
-                    className={`w-16 h-1 ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                      step >= s
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {s}
+                  </div>
+                  <span className={`text-xs mt-1 ${step >= s ? 'text-violet-600 font-medium' : 'text-gray-500'}`}>
+                    {s === 1 ? 'Info del Lead' : 'Calificación BANT'}
+                  </span>
+                </div>
+                {s < 2 && (
+                  <div
+                    className={`w-24 h-1 mx-4 ${
                       step > s ? 'bg-violet-600' : 'bg-gray-200'
                     }`}
                   />
@@ -156,336 +162,311 @@ export default function ScorecardPage() {
 
           {/* Step 1: Lead Info */}
           {step === 1 && (
-            <Card>
+            <Card data-tour="lead-info">
               <CardHeader>
-                <CardTitle>Lead Information</CardTitle>
+                <CardTitle>Información del Lead</CardTitle>
                 <CardDescription>
-                  Basic information about the lead you&apos;re qualifying
+                  Datos básicos del prospecto que estás calificando
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Input
-                  label="Company Name"
+                  label="Nombre de la Empresa *"
                   value={leadInfo.companyName}
                   onChange={(e) => setLeadInfo({ ...leadInfo, companyName: e.target.value })}
-                  placeholder="e.g., TechCorp Inc."
+                  placeholder="ej. TechCorp Inc."
                 />
                 <Input
-                  label="Contact Name"
+                  label="Nombre del Contacto"
                   value={leadInfo.contactName}
                   onChange={(e) => setLeadInfo({ ...leadInfo, contactName: e.target.value })}
-                  placeholder="e.g., John Smith"
+                  placeholder="ej. Juan Pérez"
                 />
                 <Input
-                  label="Contact Email"
+                  label="Email del Contacto"
                   type="email"
                   value={leadInfo.contactEmail}
                   onChange={(e) => setLeadInfo({ ...leadInfo, contactEmail: e.target.value })}
-                  placeholder="e.g., john@techcorp.com"
+                  placeholder="ej. juan@techcorp.com"
                 />
                 <Input
-                  label="Lead Source"
+                  label="Fuente del Lead"
                   value={leadInfo.source}
                   onChange={(e) => setLeadInfo({ ...leadInfo, source: e.target.value })}
-                  placeholder="e.g., Website, Referral, LinkedIn"
+                  placeholder="ej. LinkedIn, Referido, Web"
                 />
                 <div className="flex justify-end pt-4">
-                  <Button onClick={() => setStep(2)}>
-                    Continue <ArrowRight className="ml-2 w-4 h-4" />
+                  <Button onClick={() => setStep(2)} disabled={!canProceed}>
+                    Continuar a Calificación <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Step 2: BANT Scoring */}
+          {/* Step 2: Combined BANT + Technical Fit + Red Flags with Live Score */}
           {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>BANT Assessment</CardTitle>
-                <CardDescription>
-                  Score the lead on Budget, Authority, Need, and Timeline
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="space-y-6">
-                  <ScoreSlider
-                    label="💰 Budget"
-                    value={scores.budget}
-                    onChange={(v) => setScores({ ...scores, budget: v })}
-                    description="Does the prospect have budget allocated for this solution?"
-                    labels={['No budget', 'Exploring', 'Budget planned', 'Approved', 'Ready to spend']}
-                  />
-                  <Textarea
-                    placeholder="Notes about budget..."
-                    value={notes.budget}
-                    onChange={(e) => setNotes({ ...notes, budget: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Scoring Form */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* BANT Section */}
+                <Card data-tour="bant-section">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2">
+                      Calificación BANT
+                      <span className="text-sm font-normal text-gray-500">(Budget, Authority, Need, Timeline)</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Asigna un puntaje de 1-5 en cada categoría. Las etiquetas te ayudan a decidir.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <ScoreSlider
+                        label="💰 Budget (Presupuesto)"
+                        value={scores.budget}
+                        onChange={(v) => setScores({ ...scores, budget: v })}
+                        description="¿Tienen presupuesto asignado para esta solución?"
+                        labels={[
+                          '1 - Sin presupuesto',
+                          '2 - Explorando',
+                          '3 - Presupuesto tentativo',
+                          '4 - Aprobado internamente',
+                          '5 - Listos para invertir'
+                        ]}
+                      />
+                    </div>
 
-                <div className="space-y-6">
-                  <ScoreSlider
-                    label="👤 Authority"
-                    value={scores.authority}
-                    onChange={(v) => setScores({ ...scores, authority: v })}
-                    description="Are you talking to the decision maker?"
-                    labels={['No access', 'Influencer', 'Recommender', 'Co-decider', 'Final decider']}
-                  />
-                  <Textarea
-                    placeholder="Notes about decision-making authority..."
-                    value={notes.authority}
-                    onChange={(e) => setNotes({ ...notes, authority: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <ScoreSlider
+                        label="👤 Authority (Autoridad)"
+                        value={scores.authority}
+                        onChange={(v) => setScores({ ...scores, authority: v })}
+                        description="¿Estás hablando con quien toma la decisión?"
+                        labels={[
+                          '1 - Sin acceso',
+                          '2 - Influenciador',
+                          '3 - Recomienda',
+                          '4 - Co-decide',
+                          '5 - Decisor final'
+                        ]}
+                      />
+                    </div>
 
-                <div className="space-y-6">
-                  <ScoreSlider
-                    label="🎯 Need"
-                    value={scores.need}
-                    onChange={(v) => setScores({ ...scores, need: v })}
-                    description="How urgent and real is their need?"
-                    labels={['No need', 'Nice to have', 'Important', 'Urgent', 'Critical']}
-                  />
-                  <Textarea
-                    placeholder="Notes about their need..."
-                    value={notes.need}
-                    onChange={(e) => setNotes({ ...notes, need: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <ScoreSlider
+                        label="🎯 Need (Necesidad)"
+                        value={scores.need}
+                        onChange={(v) => setScores({ ...scores, need: v })}
+                        description="¿Qué tan urgente y real es su necesidad?"
+                        labels={[
+                          '1 - Sin necesidad',
+                          '2 - Nice to have',
+                          '3 - Importante',
+                          '4 - Urgente',
+                          '5 - Crítico'
+                        ]}
+                      />
+                    </div>
 
-                <div className="space-y-6">
-                  <ScoreSlider
-                    label="⏰ Timeline"
-                    value={scores.timeline}
-                    onChange={(v) => setScores({ ...scores, timeline: v })}
-                    description="When do they need a solution?"
-                    labels={['No timeline', '12+ months', '6-12 months', '3-6 months', 'Immediate']}
-                  />
-                  <Textarea
-                    placeholder="Notes about timeline..."
-                    value={notes.timeline}
-                    onChange={(e) => setNotes({ ...notes, timeline: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <ScoreSlider
+                        label="⏰ Timeline (Tiempo)"
+                        value={scores.timeline}
+                        onChange={(v) => setScores({ ...scores, timeline: v })}
+                        description="¿Cuándo necesitan una solución?"
+                        labels={[
+                          '1 - Sin timeline',
+                          '2 - 12+ meses',
+                          '3 - 6-12 meses',
+                          '4 - 3-6 meses',
+                          '5 - Inmediato'
+                        ]}
+                      />
+                    </div>
 
-                <div className="flex justify-between pt-4">
+                    <div className="space-y-2">
+                      <ScoreSlider
+                        label="🔧 Technical Fit (Ajuste Técnico)"
+                        value={scores.technicalFit}
+                        onChange={(v) => setScores({ ...scores, technicalFit: v })}
+                        description="¿Podemos resolver su problema con nuestra solución?"
+                        labels={[
+                          '1 - No podemos',
+                          '2 - Brechas grandes',
+                          '3 - Ajuste parcial',
+                          '4 - Buen ajuste',
+                          '5 - Ajuste perfecto'
+                        ]}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Red Flags Section */}
+                <Card data-tour="red-flags">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2">
+                      🚩 Red Flags
+                      <span className="text-sm font-normal text-gray-500">(-5 puntos cada una)</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Selecciona las señales de alerta que detectaste. Cada una reduce el score final.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                      {RED_FLAGS.map((flag) => (
+                        <button
+                          key={flag.id}
+                          type="button"
+                          onClick={() => toggleRedFlag(flag.id)}
+                          className={`p-3 rounded-lg border-2 text-left transition-all ${
+                            redFlags.includes(flag.id)
+                              ? 'border-red-500 bg-red-50 text-red-700'
+                              : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                          }`}
+                        >
+                          <span className="text-sm font-medium">{flag.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <Textarea
+                      placeholder="Notas adicionales sobre red flags..."
+                      value={redFlagNotes}
+                      onChange={(e) => setRedFlagNotes(e.target.value)}
+                      className="mt-2"
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Navigation */}
+                <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setStep(1)}>
-                    Back
-                  </Button>
-                  <Button onClick={() => setStep(3)}>
-                    Continue <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Technical Fit & Red Flags */}
-          {step === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Technical Fit & Red Flags</CardTitle>
-                <CardDescription>
-                  Assess technical compatibility and identify warning signs
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="space-y-6">
-                  <ScoreSlider
-                    label="🔧 Technical Fit"
-                    value={scores.technicalFit}
-                    onChange={(v) => setScores({ ...scores, technicalFit: v })}
-                    description="Can we actually solve their problem with our solution?"
-                    labels={['Cannot solve', 'Major gaps', 'Partial fit', 'Good fit', 'Perfect fit']}
-                  />
-                  <Textarea
-                    placeholder="Notes about technical fit..."
-                    value={notes.technicalFit}
-                    onChange={(e) => setNotes({ ...notes, technicalFit: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    🚩 Red Flags (select all that apply)
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {RED_FLAGS.map((flag) => (
-                      <button
-                        key={flag.id}
-                        type="button"
-                        onClick={() => toggleRedFlag(flag.id)}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${
-                          redFlags.includes(flag.id)
-                            ? 'border-red-500 bg-red-50 text-red-700'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                        }`}
-                      >
-                        <span className="text-sm font-medium">{flag.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <Textarea
-                    label="Additional red flag notes"
-                    placeholder="Any other concerns or observations..."
-                    value={redFlagNotes}
-                    onChange={(e) => setRedFlagNotes(e.target.value)}
-                    className="mt-4"
-                  />
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(2)}>
-                    Back
-                  </Button>
-                  <Button onClick={() => setStep(4)}>
-                    Review Score <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 4: Results */}
-          {step === 4 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Qualification Results</CardTitle>
-                <CardDescription>
-                  Review the assessment and save the scorecard
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Score Display */}
-                <div className={`p-8 rounded-xl mb-6 text-center ${
-                  recommendation.color === 'green' ? 'bg-green-50 border-2 border-green-200' :
-                  recommendation.color === 'yellow' ? 'bg-yellow-50 border-2 border-yellow-200' :
-                  'bg-red-50 border-2 border-red-200'
-                }`}>
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-lg mb-4">
-                    <span className={`text-4xl font-bold ${
-                      recommendation.color === 'green' ? 'text-green-600' :
-                      recommendation.color === 'yellow' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {totalScore}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <recommendation.icon className={`w-6 h-6 ${
-                      recommendation.color === 'green' ? 'text-green-600' :
-                      recommendation.color === 'yellow' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`} />
-                    <span className={`text-2xl font-bold ${
-                      recommendation.color === 'green' ? 'text-green-600' :
-                      recommendation.color === 'yellow' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {recommendation.label}
-                    </span>
-                  </div>
-                  <p className="text-gray-600">
-                    {recommendation.label === 'GO' && 'This lead shows strong potential. Proceed with confidence.'}
-                    {recommendation.label === 'REVIEW' && 'This lead needs further evaluation. Consider involving an SME.'}
-                    {recommendation.label === 'NO GO' && 'This lead has significant risks. Recommend declining or major negotiation.'}
-                  </p>
-                </div>
-
-                {/* Score Breakdown */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{scores.budget}</div>
-                    <div className="text-xs text-gray-500">Budget</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{scores.authority}</div>
-                    <div className="text-xs text-gray-500">Authority</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{scores.need}</div>
-                    <div className="text-xs text-gray-500">Need</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{scores.timeline}</div>
-                    <div className="text-xs text-gray-500">Timeline</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{scores.technicalFit}</div>
-                    <div className="text-xs text-gray-500">Tech Fit</div>
-                  </div>
-                </div>
-
-                {/* Red Flags */}
-                {redFlags.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-semibold text-red-700 mb-2">
-                      🚩 {redFlags.length} Red Flag{redFlags.length > 1 ? 's' : ''} Identified
-                    </h4>
-                    <ul className="text-sm text-red-600 space-y-1">
-                      {redFlags.map((flagId) => {
-                        const flag = RED_FLAGS.find(f => f.id === flagId)
-                        return flag ? <li key={flagId}>• {flag.label}</li> : null
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Lead Summary */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Lead Summary</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Company:</span>{' '}
-                      <span className="font-medium">{leadInfo.companyName || 'Not provided'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Contact:</span>{' '}
-                      <span className="font-medium">{leadInfo.contactName || 'Not provided'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Email:</span>{' '}
-                      <span className="font-medium">{leadInfo.contactEmail || 'Not provided'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Source:</span>{' '}
-                      <span className="font-medium">{leadInfo.source || 'Not provided'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Error Display */}
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(3)} disabled={isPending}>
-                    Back
+                    <ArrowLeft className="mr-2 w-4 h-4" />
+                    Volver
                   </Button>
                   <Button onClick={handleSubmit} disabled={isPending}>
                     {isPending ? (
                       <>
                         <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                        Saving...
+                        Guardando...
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 w-4 h-4" />
-                        Save Scorecard
+                        Guardar Scorecard
                       </>
                     )}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Live Score Panel - Sticky on right */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-6 space-y-4">
+                  <Card data-tour="live-score" className={`border-2 ${
+                    recommendation.color === 'green' ? 'border-green-200 bg-green-50' :
+                    recommendation.color === 'yellow' ? 'border-yellow-200 bg-yellow-50' :
+                    'border-red-200 bg-red-50'
+                  }`}>
+                    <CardContent className="p-6 text-center">
+                      <div className="text-sm text-gray-500 mb-2">Score en tiempo real</div>
+                      <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-3 ${
+                        recommendation.color === 'green' ? 'ring-4 ring-green-200' :
+                        recommendation.color === 'yellow' ? 'ring-4 ring-yellow-200' :
+                        'ring-4 ring-red-200'
+                      }`}>
+                        <span className={`text-3xl font-bold ${
+                          recommendation.color === 'green' ? 'text-green-600' :
+                          recommendation.color === 'yellow' ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {totalScore}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <recommendation.icon className={`w-5 h-5 ${
+                          recommendation.color === 'green' ? 'text-green-600' :
+                          recommendation.color === 'yellow' ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`} />
+                        <span className={`text-xl font-bold ${
+                          recommendation.color === 'green' ? 'text-green-600' :
+                          recommendation.color === 'yellow' ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {recommendation.label}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{recommendation.description}</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Score Breakdown */}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-1">
+                        <Info className="w-4 h-4" />
+                        Desglose del Score
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Budget</span>
+                          <span className="font-medium">{scores.budget}/5</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Authority</span>
+                          <span className="font-medium">{scores.authority}/5</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Need</span>
+                          <span className="font-medium">{scores.need}/5</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Timeline</span>
+                          <span className="font-medium">{scores.timeline}/5</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Technical Fit</span>
+                          <span className="font-medium">{scores.technicalFit}/5</span>
+                        </div>
+                        {redFlags.length > 0 && (
+                          <>
+                            <div className="border-t pt-2 mt-2" />
+                            <div className="flex justify-between text-sm text-red-600">
+                              <span>Red Flags ({redFlags.length})</span>
+                              <span className="font-medium">-{redFlags.length * 5}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Lead Summary */}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Lead</div>
+                      <p className="font-semibold text-gray-900">{leadInfo.companyName || 'Sin nombre'}</p>
+                      {leadInfo.contactName && (
+                        <p className="text-sm text-gray-500">{leadInfo.contactName}</p>
+                      )}
+                      {leadInfo.source && (
+                        <p className="text-xs text-gray-400 mt-1">Fuente: {leadInfo.source}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Error Display */}
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
