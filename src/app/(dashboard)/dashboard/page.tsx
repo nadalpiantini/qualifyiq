@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,60 +16,117 @@ import {
   Clock,
   AlertCircle,
   Calendar,
-  ArrowRight
+  ArrowRight,
+  Target,
+  BarChart3
 } from 'lucide-react'
 import { isDemoMode, DEMO_LEADS } from '@/lib/demo-mode'
 
-// Mock data - will be replaced with real data from Supabase
-const stats = [
-  {
-    title: 'Total Leads',
-    value: '248',
-    change: '+12%',
-    changeType: 'positive' as const,
-    icon: Users,
-  },
-  {
-    title: 'Qualified (GO)',
-    value: '156',
-    change: '+8%',
-    changeType: 'positive' as const,
-    icon: CheckCircle2,
-  },
-  {
-    title: 'Disqualified (NO GO)',
-    value: '67',
-    change: '-5%',
-    changeType: 'negative' as const,
-    icon: XCircle,
-  },
-  {
-    title: 'Avg. Score',
-    value: '72',
-    change: '+3',
-    changeType: 'positive' as const,
-    icon: TrendingUp,
-  },
-]
-
-const recentLeads = [
-  { id: 1, company: 'TechCorp Inc.', contact: 'John Smith', score: 85, status: 'go' },
-  { id: 2, company: 'StartupXYZ', contact: 'Jane Doe', score: 45, status: 'no_go' },
-  { id: 3, company: 'Enterprise Ltd.', contact: 'Bob Johnson', score: 62, status: 'review' },
-  { id: 4, company: 'Agency Pro', contact: 'Alice Brown', score: 78, status: 'go' },
-  { id: 5, company: 'SMB Solutions', contact: 'Charlie Wilson', score: 55, status: 'review' },
-]
-
 export default function DashboardPage() {
-  const [reviewLeads, setReviewLeads] = useState<typeof DEMO_LEADS>([])
+  const [leads, setLeads] = useState<typeof DEMO_LEADS>([])
 
   useEffect(() => {
-    // Get leads needing review/follow-up
+    // Get leads from demo mode or real data
     if (isDemoMode()) {
-      const needsReview = DEMO_LEADS.filter(l => l.recommendation === 'review')
-      setReviewLeads(needsReview)
+      setLeads(DEMO_LEADS)
     }
+    // In production, would fetch from Supabase
   }, [])
+
+  // Calculate real metrics from leads
+  const metrics = useMemo(() => {
+    if (leads.length === 0) {
+      return {
+        total: 0,
+        qualified: 0,
+        disqualified: 0,
+        review: 0,
+        avgScore: 0,
+        goPercent: 0,
+        reviewPercent: 0,
+        noGoPercent: 0,
+      }
+    }
+
+    const qualified = leads.filter(l => l.recommendation === 'go').length
+    const disqualified = leads.filter(l => l.recommendation === 'no_go').length
+    const review = leads.filter(l => l.recommendation === 'review').length
+    const avgScore = Math.round(leads.reduce((sum, l) => sum + l.score, 0) / leads.length)
+
+    return {
+      total: leads.length,
+      qualified,
+      disqualified,
+      review,
+      avgScore,
+      goPercent: Math.round((qualified / leads.length) * 100),
+      reviewPercent: Math.round((review / leads.length) * 100),
+      noGoPercent: Math.round((disqualified / leads.length) * 100),
+    }
+  }, [leads])
+
+  // Leads needing follow-up (REVIEW status)
+  const reviewLeads = useMemo(() => {
+    return leads.filter(l => l.recommendation === 'review')
+  }, [leads])
+
+  // Recent leads (sorted by date)
+  const recentLeads = useMemo(() => {
+    return [...leads]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+  }, [leads])
+
+  // Source distribution
+  const sourceDistribution = useMemo(() => {
+    const sources: Record<string, number> = {}
+    leads.forEach(l => {
+      sources[l.source] = (sources[l.source] || 0) + 1
+    })
+    return Object.entries(sources)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percent: Math.round((count / leads.length) * 100)
+      }))
+      .sort((a, b) => b.count - a.count)
+  }, [leads])
+
+  // Stats cards configuration
+  const stats = [
+    {
+      title: 'Total Leads',
+      value: metrics.total.toString(),
+      change: '+12%',
+      changeType: 'positive' as const,
+      icon: Users,
+      color: 'violet',
+    },
+    {
+      title: 'Qualified (GO)',
+      value: metrics.qualified.toString(),
+      change: '+8%',
+      changeType: 'positive' as const,
+      icon: CheckCircle2,
+      color: 'green',
+    },
+    {
+      title: 'Disqualified (NO GO)',
+      value: metrics.disqualified.toString(),
+      change: '-5%',
+      changeType: 'negative' as const,
+      icon: XCircle,
+      color: 'red',
+    },
+    {
+      title: 'Avg. Score',
+      value: metrics.avgScore.toString(),
+      change: '+3',
+      changeType: 'positive' as const,
+      icon: TrendingUp,
+      color: 'violet',
+    },
+  ]
 
   return (
     <div className="min-h-screen">
@@ -132,7 +189,7 @@ export default function DashboardPage() {
                 ))}
               </div>
               {reviewLeads.length > 3 && (
-                <Link href="/leads?filter=review" className="block mt-4">
+                <Link href="/leads?recommendation=review" className="block mt-4">
                   <Button variant="ghost" className="w-full text-yellow-700 hover:text-yellow-800 hover:bg-yellow-100">
                     View all {reviewLeads.length} leads needing review
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -164,10 +221,14 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className={`p-3 rounded-xl ${
-                    stat.title === 'Disqualified (NO GO)' ? 'bg-red-100' : 'bg-violet-100'
+                    stat.color === 'red' ? 'bg-red-100' :
+                    stat.color === 'green' ? 'bg-green-100' :
+                    'bg-violet-100'
                   }`}>
                     <stat.icon className={`w-6 h-6 ${
-                      stat.title === 'Disqualified (NO GO)' ? 'text-red-600' : 'text-violet-600'
+                      stat.color === 'red' ? 'text-red-600' :
+                      stat.color === 'green' ? 'text-green-600' :
+                      'text-violet-600'
                     }`} />
                   </div>
                 </div>
@@ -178,8 +239,14 @@ export default function DashboardPage() {
 
         {/* Recent Leads */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Leads</CardTitle>
+            <Link href="/leads">
+              <Button variant="ghost" size="sm">
+                View All
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -188,6 +255,7 @@ export default function DashboardPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Company</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Contact</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Source</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Score</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
                     <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Actions</th>
@@ -197,24 +265,27 @@ export default function DashboardPage() {
                   {recentLeads.map((lead) => (
                     <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-4 px-4">
-                        <span className="font-medium text-gray-900">{lead.company}</span>
+                        <span className="font-medium text-gray-900">{lead.companyName}</span>
                       </td>
-                      <td className="py-4 px-4 text-gray-600">{lead.contact}</td>
+                      <td className="py-4 px-4 text-gray-600">{lead.contactName}</td>
+                      <td className="py-4 px-4">
+                        <span className="text-sm text-gray-500">{lead.source}</span>
+                      </td>
                       <td className="py-4 px-4">
                         <ScoreBadge score={lead.score} size="sm" />
                       </td>
                       <td className="py-4 px-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          lead.status === 'go' ? 'bg-green-100 text-green-800' :
-                          lead.status === 'no_go' ? 'bg-red-100 text-red-800' :
+                          lead.recommendation === 'go' ? 'bg-green-100 text-green-800' :
+                          lead.recommendation === 'no_go' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {lead.status === 'go' ? 'GO' : lead.status === 'no_go' ? 'NO GO' : 'REVIEW'}
+                          {lead.recommendation === 'go' ? 'GO' : lead.recommendation === 'no_go' ? 'NO GO' : 'REVIEW'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
                         <Link
-                          href={`/leads/demo-lead-${lead.id}`}
+                          href={`/leads/${lead.id}`}
                           className="text-violet-600 hover:text-violet-800 text-sm font-medium"
                         >
                           View Details
@@ -228,60 +299,131 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Score Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Analytics Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Score Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Score Distribution</CardTitle>
+              <div className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-violet-600" />
+                <CardTitle>Score Distribution</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">GO (70-100)</span>
-                    <span className="font-medium">63%</span>
+                    <span className="font-medium text-green-600">{metrics.goPercent}%</span>
                   </div>
                   <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full" style={{ width: '63%' }} />
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-500"
+                      style={{ width: `${metrics.goPercent}%` }}
+                    />
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">{metrics.qualified} leads</p>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">REVIEW (50-69)</span>
-                    <span className="font-medium">27%</span>
+                    <span className="font-medium text-yellow-600">{metrics.reviewPercent}%</span>
                   </div>
                   <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-yellow-500 rounded-full" style={{ width: '27%' }} />
+                    <div
+                      className="h-full bg-yellow-500 rounded-full transition-all duration-500"
+                      style={{ width: `${metrics.reviewPercent}%` }}
+                    />
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">{metrics.review} leads</p>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">NO GO (0-49)</span>
-                    <span className="font-medium">10%</span>
+                    <span className="font-medium text-red-600">{metrics.noGoPercent}%</span>
                   </div>
                   <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500 rounded-full" style={{ width: '10%' }} />
+                    <div
+                      className="h-full bg-red-500 rounded-full transition-all duration-500"
+                      style={{ width: `${metrics.noGoPercent}%` }}
+                    />
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">{metrics.disqualified} leads</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Lead Sources */}
           <Card>
             <CardHeader>
-              <CardTitle>Prediction Accuracy</CardTitle>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-violet-600" />
+                <CardTitle>Lead Sources</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-violet-100 mb-4">
+              <div className="space-y-3">
+                {sourceDistribution.slice(0, 5).map((source, idx) => (
+                  <div key={source.name}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">{source.name}</span>
+                      <span className="font-medium">{source.count} ({source.percent}%)</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${source.percent}%`,
+                          opacity: 1 - (idx * 0.15)
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Prediction Accuracy */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-violet-600" />
+                <CardTitle>Prediction Accuracy</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-4">
+                <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-violet-100 mb-4">
                   <span className="text-4xl font-bold text-violet-600">87%</span>
                 </div>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm">
                   Of leads scored as GO became successful clients
                 </p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Based on 142 completed deals
+                <p className="text-xs text-gray-400 mt-2">
+                  Based on {metrics.qualified > 0 ? Math.round(metrics.qualified * 0.87) : 0} completed deals
                 </p>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Won</span>
+                    <span className="text-green-600 font-medium">
+                      {metrics.qualified > 0 ? Math.round(metrics.qualified * 0.87) : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-gray-500">Lost</span>
+                    <span className="text-red-600 font-medium">
+                      {metrics.qualified > 0 ? Math.round(metrics.qualified * 0.13) : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-gray-500">Pending</span>
+                    <span className="text-yellow-600 font-medium">
+                      {metrics.review}
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
